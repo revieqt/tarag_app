@@ -22,6 +22,7 @@ interface LoginResponse {
     safetyState: {
       isInAnEmergency: boolean;
       emergencyType: string;
+      emergencyContact?: string;
     };
     visibilitySettings: {
       isProfilePublic: boolean;

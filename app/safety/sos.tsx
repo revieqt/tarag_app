@@ -9,11 +9,15 @@ import SOSButton from "@/components/SOSButton";
 import { LinearGradient } from "expo-linear-gradient";
 import { useThemeColor } from "@/hooks/useThemeColor";
 import { useSession } from "@/context/SessionContext";
-// import { enableSafetyMode, disableSafetyMode } from "@/services/safetyApiService";
+import { updateStringUserData } from "@/services/userService";
+import { enableSOSService, disableSOSService } from "@/services/safetyService";
+import { CustomAlert } from '@/components/Alert';
 import { openDocument } from "@/utils/documentUtils";
 import BackButton from "@/components/BackButton";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from "react-native-safe-area-context";
+import InputModal from '@/components/modals/InputModal';
+import * as Location from 'expo-location';
 
 const emergencyTypes = [
   { id: 'medical', label: 'Medical Emergency', icon: 'medical-bag'},
@@ -36,6 +40,10 @@ export default function SOSSection(){
   const [selectedEmergencyType, setSelectedEmergencyType] = useState<string>('');
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [emergencyContactModalVisible, setEmergencyContactModalVisible] = useState(false);
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertMessage, setAlertMessage] = useState('');
+  const [alertTitle, setAlertTitle] = useState('');
   
   
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -63,7 +71,7 @@ export default function SOSSection(){
     longPressTimer.current = setTimeout(() => {
       if (isSOSActive) {
         // Disable safety mode
-        // handleDisableSafetyMode();
+        handleDisableSafetyMode();
       } else {
         // Show modal to enable safety mode
         setModalVisible(true);
@@ -80,87 +88,126 @@ export default function SOSSection(){
     }
   };
 
-//   const handleEnableSafetyMode = async () => {
-//     if (!selectedEmergencyType || !session?.accessToken || !session?.user) {
-//       Alert.alert('Error', 'Please select an emergency type');
-//       return;
-//     }
+  const handleUpdateEmergencyContact = async (value: string | { areaCode: string; number: string }) => {
+    if (typeof value !== 'string') {
+      setAlertTitle('Error');
+      setAlertMessage('Please provide a valid email address');
+      setAlertVisible(true);
+      return;
+    }
 
-//     setIsLoading(true);
-//     try {
-//       const userData = {
-//         accessToken: session.accessToken,
-//         userID: session.user.id,
-//         fname: session.user.fname,
-//         lname: session.user.lname,
-//         username: session.user.username,
-//         type: session.user.type,
-//         email: session.user.email,
-//         contactNumber: session.user.contactNumber
-//       };
+    if (!session?.user?.id || !session?.accessToken) {
+      setAlertTitle('Error');
+      setAlertMessage('Session not found');
+      setAlertVisible(true);
+      return;
+    }
 
-//       const updateSessionCallback = (safetyState: { isInAnEmergency: boolean; emergencyType: string; logID?: string }) => {
-//         if (session?.user) {
-//           updateSession({
-//             ...session,
-//             user: {
-//               ...session.user,
-//               safetyState
-//             }
-//           });
-//         }
-//       };
+    try {
+      setIsLoading(true);
+      await updateStringUserData(
+        session.user.id,
+        'safetyState.emergencyContact',
+        value,
+        session.accessToken,
+        updateSession
+      );
+      setAlertTitle('Success');
+      setAlertMessage('Emergency contact email updated');
+      setAlertVisible(true);
+      setEmergencyContactModalVisible(false);
+    } catch (error) {
+      setAlertTitle('Error');
+      setAlertMessage(error instanceof Error ? error.message : 'Failed to update emergency contact');
+      setAlertVisible(true);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-//       await enableSafetyMode(
-//         { emergencyType: selectedEmergencyType, message },
-//         userData,
-//         updateSessionCallback
-//       );
+  const handleEnableSafetyMode = async () => {
+    if (!selectedEmergencyType || !session?.accessToken || !session?.user) {
+      setAlertTitle('Error');
+      setAlertMessage('Please select an emergency type');
+      setAlertVisible(true);
+      return;
+    }
 
-//       setModalVisible(false);
-//       setSelectedEmergencyType('');
-//       setMessage('');
-//       Alert.alert('Safety Mode Activated', 'Emergency services have been notified of your situation.');
-//     } catch (error) {
-//       Alert.alert('Error', error instanceof Error ? error.message : 'Failed to activate safety mode');
-//     } finally {
-//       setIsLoading(false);
-//     }
-//   };
+    setIsLoading(true);
+    try {
+      // Request location permission
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        setAlertTitle('Error');
+        setAlertMessage('Location permission is required to activate SOS');
+        setAlertVisible(true);
+        setIsLoading(false);
+        return;
+      }
 
-//   const handleDisableSafetyMode = async () => {
-//     if (!session?.accessToken || !session?.user?.safetyState?.logID) {
-//       Alert.alert('Error', 'No active safety log found');
-//       return;
-//     }
+      // Get current location
+      const location = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.High,
+      });
 
-//     setIsLoading(true);
-//     try {
-//       const updateSessionCallback = (safetyState: { isInAnEmergency: boolean; emergencyType: string; logID?: string }) => {
-//         if (session?.user) {
-//           updateSession({
-//             ...session,
-//             user: {
-//               ...session.user,
-//               safetyState
-//             }
-//           });
-//         }
-//       };
+      const { latitude, longitude } = location.coords;
 
-//       await disableSafetyMode(
-//         session.accessToken,
-//         session.user.safetyState.logID,
-//         updateSessionCallback
-//       );
+      // Call safety service
+      const result = await enableSOSService(
+        session.user.id,
+        selectedEmergencyType,
+        latitude,
+        longitude,
+        session.accessToken,
+        updateSession,
+        session.user.safetyState?.emergencyContact,
+        message || undefined
+      );
 
-//       Alert.alert('Safety Mode Deactivated', 'You are now safe. Emergency services have been notified.');
-//     } catch (error) {
-//       Alert.alert('Error', error instanceof Error ? error.message : 'Failed to deactivate safety mode');
-//     } finally {
-//       setIsLoading(false);
-//     }
-//   };
+      setAlertTitle('SOS Activated');
+      setAlertMessage(`Emergency alert sent from ${result.data.locationInfo.name}`);
+      setAlertVisible(true);
+
+      // Close modal and reset form
+      setModalVisible(false);
+      setSelectedEmergencyType('');
+      setMessage('');
+    } catch (error) {
+      setAlertTitle('Error');
+      setAlertMessage(error instanceof Error ? error.message : 'Failed to activate SOS');
+      setAlertVisible(true);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDisableSafetyMode = async () => {
+    if (!session?.accessToken || !session?.user) {
+      setAlertTitle('Error');
+      setAlertMessage('Session not found');
+      setAlertVisible(true);
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const result = await disableSOSService(
+        session.user.id,
+        session.accessToken,
+        updateSession
+      );
+
+      setAlertTitle('SOS Deactivated');
+      setAlertMessage('Emergency mode has been turned off');
+      setAlertVisible(true);
+    } catch (error) {
+      setAlertTitle('Error');
+      setAlertMessage(error instanceof Error ? error.message : 'Failed to deactivate SOS');
+      setAlertVisible(true);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
 
   return (
@@ -210,6 +257,18 @@ export default function SOSSection(){
           colors={['transparent', gradientColor]}
           style={styles.bottomGradient}
         >
+            <ThemedView style={styles.emergencyContact} color='primary'>
+                <ThemedText>{session?.user?.safetyState?.emergencyContact || "Add a Emergency Contact Email"}</ThemedText>
+                <ThemedText style={{fontSize: 12, opacity: .6}}>
+                    {session?.user?.safetyState?.emergencyContact ? 'Emergency Contact Email' : 'Recieves alerts when SOS is activated'}
+                </ThemedText>
+                <TouchableOpacity 
+                  style={styles.emergencyContactEdit}
+                  onPress={() => setEmergencyContactModalVisible(true)}
+                >
+                    <ThemedIcons name='pencil' size={20}/>
+                </TouchableOpacity>
+            </ThemedView>
         </LinearGradient>
 
         {/* Emergency Type Selection Modal */}
@@ -275,10 +334,7 @@ export default function SOSSection(){
               </View>
                 <Button
                   title={isLoading ? 'Activating...' : 'Activate SOS'}
-                  onPress={
-                    // handleEnableSafetyMode
-                    () => {}
-                  }
+                  onPress={handleEnableSafetyMode}
                   disabled={!selectedEmergencyType || isLoading}
                   type="primary"
                   buttonStyle={{marginTop: 10}}
@@ -290,6 +346,29 @@ export default function SOSSection(){
         </SafeAreaView>
         </Modal>
       </View>
+
+      <CustomAlert
+        visible={alertVisible}
+        title={alertTitle}
+        message={alertMessage}
+        icon={alertTitle === 'Success' ? 'check-circle' : 'alert'}
+        buttons={[
+          { text: 'OK', style: 'default', onPress: () => setAlertVisible(false) }
+        ]}
+        onClose={() => setAlertVisible(false)}
+        fadeAfter={3000}
+      />
+
+      <InputModal
+        visible={emergencyContactModalVisible}
+        onClose={() => setEmergencyContactModalVisible(false)}
+        onSubmit={handleUpdateEmergencyContact}
+        label="Emergency Contact Email"
+        description="Enter the email address of your emergency contact"
+        type="email"
+        placeholder="contact@example.com"
+        initialValue={session?.user?.safetyState?.emergencyContact || ''}
+      />
     </>
     
   );
@@ -384,5 +463,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 8,
-  }
+  },
+  emergencyContact:{
+    padding: 10,
+    borderRadius: 12,
+  },
+  emergencyContactEdit:{
+    position: 'absolute',
+    top: 10,
+    right: 15,
+    bottom: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
 });

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Modal, View, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { Modal, View, StyleSheet, TouchableOpacity } from 'react-native';
 import { ThemedText } from '../ThemedText';
 import { ThemedView } from '../ThemedView';
 import { ThemedIcons } from '../ThemedIcons';
@@ -13,7 +13,7 @@ interface InputModalProps {
   onSubmit: (value: string | { areaCode: string; number: string }) => void;
   label: string;
   description?: string;
-  type: 'text' | 'contactNumber';
+  type: 'text' | 'email' | 'contactNumber';
   initialValue?: string;
   placeholder?: string;
 }
@@ -31,17 +31,29 @@ const InputModal: React.FC<InputModalProps> = ({
   const [textValue, setTextValue] = useState(initialValue);
   const [areaCode, setAreaCode] = useState('63+');
   const [contactNumber, setContactNumber] = useState('');
+  const [error, setError] = useState('');
+
+  const isValidEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
 
   const handleSubmit = () => {
-    if (type === 'text') {
+    setError('');
+    
+    if (type === 'text' || type === 'email') {
       if (!textValue.trim()) {
-        Alert.alert('Error', 'Please enter a value');
+        setError('Please enter a value');
+        return;
+      }
+      if (type === 'email' && !isValidEmail(textValue.trim())) {
+        setError('Please enter a valid email address');
         return;
       }
       onSubmit(textValue.trim());
     } else if (type === 'contactNumber') {
       if (!contactNumber.trim()) {
-        Alert.alert('Error', 'Please enter a contact number');
+        setError('Please enter a contact number');
         return;
       }
       onSubmit({ areaCode, number: contactNumber });
@@ -59,6 +71,7 @@ const InputModal: React.FC<InputModalProps> = ({
     setTextValue('');
     setContactNumber('');
     setAreaCode('63+');
+    setError('');
     onClose();
   };
 
@@ -84,12 +97,13 @@ const InputModal: React.FC<InputModalProps> = ({
 
           {/* Input Field */}
           <View>
-            {type === 'text' ? (
+            {type === 'text' || type === 'email' ? (
               <TextField
                 placeholder={placeholder || `Enter ${label.toLowerCase()}`}
                 value={textValue}
                 onChangeText={setTextValue}
-                autoCapitalize="words"
+                autoCapitalize="none"
+                keyboardType={type === 'email' ? 'email-address' : 'default'}
               />
             ) : (
               <ContactNumberField
@@ -101,6 +115,15 @@ const InputModal: React.FC<InputModalProps> = ({
               />
             )}
           </View>
+
+          {/* Error Message */}
+          {error && (
+            <View style={styles.errorContainer}>
+              <ThemedIcons name="alert-circle" size={16} color="#ff6b6b" />
+              <ThemedText style={styles.errorText}>{error}</ThemedText>
+            </View>
+          )}
+
           <View>
             <Button
               title="Continue"
@@ -133,6 +156,22 @@ const styles = StyleSheet.create({
     top: 10,
     right: 10,
     zIndex: 1,
+  },
+  errorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 107, 107, 0.1)',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
+    gap: 8,
+    borderLeftWidth: 3,
+    borderLeftColor: '#ff6b6b',
+  },
+  errorText: {
+    color: '#ff6b6b',
+    fontSize: 12,
+    flex: 1,
   },
 });
 
