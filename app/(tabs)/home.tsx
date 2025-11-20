@@ -208,7 +208,7 @@ export default function HomeScreen() {
               <ThemedText style={styles.menuOptionText}>Itineraries</ThemedText>
             </TouchableOpacity>
 
-            <TouchableOpacity style={[styles.menuOptions, {backgroundColor: accentColor}]} onPress={() => []}>
+            <TouchableOpacity style={[styles.menuOptions, {backgroundColor: accentColor}]} onPress={() => router.push('/safety/safety')}>
               <ThemedIcons name="shield-plus" size={25} color='#fff'/>
               <ThemedText style={styles.menuOptionText}>Safety</ThemedText>
             </TouchableOpacity>

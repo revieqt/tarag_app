@@ -6,6 +6,7 @@ import { useThemeColor } from '@/hooks/useThemeColor';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { SessionProvider } from '@/context/SessionContext';
 import { View } from 'react-native';
+import { RouteProvider } from '@/context/RouteContext';
 // import * as SplashScreen from 'expo-splash-screen';
 
 // SplashScreen.preventAutoHideAsync();
@@ -37,7 +38,9 @@ export default function RootLayout() {
   return (
     <ThemeProvider>
       <SessionProvider>
-        <AppContent />
+        <RouteProvider>
+          <AppContent />
+        </RouteProvider>
       </SessionProvider>
     </ThemeProvider>
   );
@@ -64,6 +67,7 @@ function AppContent() {
           <Stack.Screen name="account/profile" />
           <Stack.Screen name="account/settings-accountControl" />
           <Stack.Screen name="routes/routes" />
+          <Stack.Screen name="safety/safety" />
           <Stack.Screen name="+not-found" />
         </Stack>
       </SafeAreaView>

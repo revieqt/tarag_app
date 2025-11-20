@@ -19,9 +19,11 @@ const WaveHeader: React.FC<WaveHeaderProps> = ({ color, title, subtitle, iconNam
   const backgroundColor = useThemeColor({}, 'background');
   return (
     <View style={[styles.container, {backgroundColor: color || secondaryColor}]}>
-      {/* <BackButton style={{padding: 16, zIndex: 1000}} color='#fff'/>
-      {title && <ThemedText type='subtitle'>{title}</ThemedText>}
-      {subtitle && <ThemedText style={{opacity: .7}}>{subtitle}</ThemedText>}
+      <BackButton style={{padding: 16, zIndex: 1000}} color='#fff'/>
+      <View style={styles.textContainer}>
+        {title && <ThemedText type='subtitle' style={{color: '#fff'}}>{title}</ThemedText>}
+        {subtitle && <ThemedText style={{opacity: .7, color: '#fff'}}>{subtitle}</ThemedText>}
+      </View>
       {iconName && (
         <>
           <View style={styles.iconContainer}>
@@ -33,53 +35,46 @@ const WaveHeader: React.FC<WaveHeaderProps> = ({ color, title, subtitle, iconNam
             />
           </View>
           <LinearGradient
-            colors={[backgroundColor, backgroundColor, 'transparent']}
+            colors={['#fff','#fff', 'transparent']}
             start={{ x: 1, y: 0 }}
             end={{ x: 0, y: 0 }}
             style={styles.circle}
           >
 
             <LinearGradient
-              colors={[backgroundColor, backgroundColor, 'transparent']}
+              colors={['#fff','#fff', 'transparent']}
               start={{ x: 1, y: 0 }}
               end={{ x: 0, y: 0 }}
               style={styles.innerCirlce}
             />
           </LinearGradient>
         </>
-      )} */}
-      <BackButton style={{padding: 16, zIndex: 1000}} color='#fff'/>
-      <Wave/>
+      )}
+      <Wave style={styles.wave} color={backgroundColor}/>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    height: 120,
+    height: 150,
     overflow: 'hidden'
   },
-  gradientOverlay: {
-    paddingTop: 50,
+  textContainer: {
     paddingHorizontal: 16,
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    zIndex: 100
   },
   iconContainer: {
     position: 'absolute',
-    top: 20,
+    top: 40,
     right: -10,
     justifyContent: 'center',
     alignItems: 'center',
     opacity: .9,
-    zIndex: 99
+    zIndex: 99,
   },
   circle: {
     position: 'absolute',
-    top: 10,
+    top: 20,
     right: -100,
     width: 300,
     height: 300,
@@ -94,6 +89,11 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     opacity: .5,
     padding: 30,
+  },
+  wave: {
+    position: 'absolute',
+    bottom: 0,
+    zIndex: 101,
   }
 });
 

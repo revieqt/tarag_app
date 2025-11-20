@@ -33,12 +33,14 @@ export type RouteData = {
 // 📍 ActiveRoute type
 export type ActiveRoute = {
   routeID: string;
-  userID: string;
-  location: { latitude: number; longitude: number; locationName: string }[];  // start point, waypoints, and endpoint
-  mode: string;  // transport mode
-  status: string;
+  type: 'generated' | 'tracking'; // 'generated' = full route with data, 'tracking' = location tracking only
+  location?: { latitude: number; longitude: number; locationName: string }[];  // start point, waypoints, and endpoint
+  mode?: string;  // transport mode
+  status?: string;
   createdOn: Date;
-  routeData?: RouteData; // ✅ ORS data
+  routeData?: RouteData; // ✅ ORS data - for 'generated' type
+  timer?: number; // elapsed time in seconds
+  distanceTravelled?: number; // distance in meters
 };
 
 // 💡 Context shape
@@ -46,6 +48,9 @@ type RouteContextType = {
   activeRoute: ActiveRoute | undefined;
   setActiveRoute: (route: ActiveRoute | undefined) => Promise<void>;
   clearActiveRoute: () => Promise<void>;
+  elapsedTime: number; // in seconds
+  distanceTravelled: number; // in meters
+  updateDistanceTravelled: (distance: number) => Promise<void>;
 };
 
 // 🔗 Context init
@@ -55,6 +60,8 @@ const RouteContext = createContext<RouteContextType | undefined>(undefined);
 export const RouteProvider = ({ children }: { children: ReactNode }) => {
   const [activeRoute, setActiveRouteState] = useState<ActiveRoute | undefined>(undefined);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [elapsedTime, setElapsedTime] = useState(0); // in seconds
+  const [distanceTravelled, setDistanceTravelledState] = useState(0); // in meters
 
   // Load route data on mount
   useEffect(() => {
@@ -68,6 +75,9 @@ export const RouteProvider = ({ children }: { children: ReactNode }) => {
             parsed.createdOn = new Date(parsed.createdOn);
           }
           setActiveRouteState(parsed);
+          // Restore timer and distance if they exist
+          setElapsedTime(parsed.timer || 0);
+          setDistanceTravelledState(parsed.distanceTravelled || 0);
         }
       } catch (err) {
         console.error('Failed to load route data:', err);
@@ -79,14 +89,39 @@ export const RouteProvider = ({ children }: { children: ReactNode }) => {
     loadRoute();
   }, []);
 
+  // Timer effect - runs every second if there's an active route
+  useEffect(() => {
+    if (!activeRoute) {
+      setElapsedTime(0);
+      setDistanceTravelledState(0);
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setElapsedTime(prev => prev + 1);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [activeRoute]);
+
   const setActiveRoute = async (route: ActiveRoute | undefined) => {
     try {
       if (route) {
-        await AsyncStorage.setItem(ROUTE_STORAGE_KEY, JSON.stringify(route));
+        const routeWithTracking = {
+          ...route,
+          timer: elapsedTime,
+          distanceTravelled: distanceTravelled,
+        };
+        await AsyncStorage.setItem(ROUTE_STORAGE_KEY, JSON.stringify(routeWithTracking));
+        setActiveRouteState(routeWithTracking);
+        setElapsedTime(0); // Reset timer for new route
+        setDistanceTravelledState(0); // Reset distance for new route
       } else {
         await AsyncStorage.removeItem(ROUTE_STORAGE_KEY);
+        setActiveRouteState(undefined);
+        setElapsedTime(0);
+        setDistanceTravelledState(0);
       }
-      setActiveRouteState(route);
     } catch (err) {
       console.error('Failed to update active route:', err);
     }
@@ -96,8 +131,26 @@ export const RouteProvider = ({ children }: { children: ReactNode }) => {
     try {
       await AsyncStorage.removeItem(ROUTE_STORAGE_KEY);
       setActiveRouteState(undefined);
+      setElapsedTime(0);
+      setDistanceTravelledState(0);
     } catch (err) {
       console.error('Failed to clear active route:', err);
+    }
+  };
+
+  const updateDistanceTravelled = async (distance: number) => {
+    setDistanceTravelledState(distance);
+    if (activeRoute) {
+      try {
+        const routeWithTracking = {
+          ...activeRoute,
+          timer: elapsedTime,
+          distanceTravelled: distance,
+        };
+        await AsyncStorage.setItem(ROUTE_STORAGE_KEY, JSON.stringify(routeWithTracking));
+      } catch (err) {
+        console.error('Failed to update distance travelled:', err);
+      }
     }
   };
 
@@ -110,6 +163,9 @@ export const RouteProvider = ({ children }: { children: ReactNode }) => {
       activeRoute,
       setActiveRoute,
       clearActiveRoute,
+      elapsedTime,
+      distanceTravelled,
+      updateDistanceTravelled,
     }}>
       {children}
     </RouteContext.Provider>
