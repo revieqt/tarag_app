@@ -1,7 +1,10 @@
 {
   "expo": {
-    "name": "tarag_app",
+    "name": "TaraG",
     "slug": "tarag_app",
-    "version": "1.0.0"
+    "scheme": "taragapp",
+    "android": {
+      "package": "com.taragapp"
+    }
   }
 }

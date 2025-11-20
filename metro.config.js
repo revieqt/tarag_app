@@ -1,7 +1,9 @@
-// Learn more https://docs.expo.io/guides/customizing-metro
+// metro.config.js
 const { getDefaultConfig } = require('expo/metro-config');
 
-/** @type {import('expo/metro-config').MetroConfig} */
 const config = getDefaultConfig(__dirname);
+
+// Required for expo-router
+config.resolver.sourceExts.push('cjs');
 
 module.exports = config;
