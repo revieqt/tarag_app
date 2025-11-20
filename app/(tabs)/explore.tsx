@@ -1,15 +1,15 @@
-// app/(tabs)/home.tsx
-import { View, Text, StyleSheet } from "react-native";
+import { StyleSheet } from 'react-native';
+import { ThemedText } from '@/components/ThemedText';
+import { ThemedView } from '@/components/ThemedView';
 
 export default function ExploreScreen() {
   return (
-    <View style={styles.container}>
-      <Text style={styles.text}>Welcome to Explore</Text>
-    </View>
+    <ThemedView style={{flex: 1}}>
+      <ThemedText>Explore Tab</ThemedText>
+    </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: "center", alignItems: "center" },
-  text: { fontSize: 22, fontWeight: "600" },
+  
 });
