@@ -12,8 +12,8 @@ interface WaveProps {
 
 const Wave: React.FC<WaveProps> = ({
   color = useThemeColor({}, 'primary'), // default indigo color
-  height = 70,
-  amplitude = 40,
+  height = 50,
+  amplitude = 30,
   style,
 }) => {
   const waveWidth = 1000; // width of SVG for smooth curve

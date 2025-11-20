@@ -6,12 +6,13 @@ import { useThemeColor } from '@/hooks/useThemeColor';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { SessionProvider } from '@/context/SessionContext';
 import { View } from 'react-native';
+// import * as SplashScreen from 'expo-splash-screen';
+
+// SplashScreen.preventAutoHideAsync();
 
 export {
   ErrorBoundary,
 } from 'expo-router';
-
-// SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const [loaded, error] = useFonts({
@@ -62,6 +63,7 @@ function AppContent() {
           <Stack.Screen name="account/firstLogin" />
           <Stack.Screen name="account/profile" />
           <Stack.Screen name="account/settings-accountControl" />
+          <Stack.Screen name="routes/routes" />
           <Stack.Screen name="+not-found" />
         </Stack>
       </SafeAreaView>

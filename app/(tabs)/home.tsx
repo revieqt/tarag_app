@@ -16,7 +16,6 @@ export default function HomeScreen() {
   const user = session?.user;
   const backgroundColor = useThemeColor({}, 'background');
   const primaryColor = useThemeColor({}, 'primary');
-  const secondaryColor = useThemeColor({}, 'secondary');
   const accentColor = useThemeColor({}, 'accent');
   const floatAnimation = useRef(new Animated.Value(0)).current;
   
@@ -199,7 +198,7 @@ export default function HomeScreen() {
         
         <View style={{paddingHorizontal: 16, zIndex: 1000, paddingBottom: 2000, backgroundColor}}>
           <View style={styles.menu}>
-            <TouchableOpacity style={[styles.menuOptions, {backgroundColor: accentColor}]} onPress={() => []}>
+            <TouchableOpacity style={[styles.menuOptions, {backgroundColor: accentColor}]} onPress={() => router.push('/routes/routes')}>
               <ThemedIcons name="map-marker-radius" size={25} color='#fff'/>
               <ThemedText style={styles.menuOptionText}>Routes</ThemedText>
             </TouchableOpacity>
@@ -326,7 +325,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-end',
   },
   headerContent: {
-    height: 40,
+    height: 50,
   },
   textContainer: {
     position: 'absolute',
@@ -335,7 +334,7 @@ const styles = StyleSheet.create({
   },
   messageBubble: {
     position: 'absolute',
-    bottom: 0,
+    bottom: -10,
     right: 14,
     paddingHorizontal: 12,
     paddingVertical: 5,
@@ -361,7 +360,7 @@ const styles = StyleSheet.create({
     height: 30,
     position: 'absolute',
     bottom: 0,
-    left: 100,
+    left: '50%',
     right: 0,
     zIndex: 100,
     pointerEvents: 'none',
@@ -379,7 +378,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     gap: 2,
-    backgroundColor: 'rgba(0, 202, 255,.8)',
     borderRadius: 10,
     paddingTop: 5,
     zIndex: 1002
@@ -404,7 +402,7 @@ const styles = StyleSheet.create({
     padding: 14,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: '#ccc3'
+    borderColor: '#ccc0'
   },
   rightGridContainer:{
     height: '48%',
@@ -412,7 +410,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: '#ccc3'
+    borderColor: '#ccc0'
   },
   gridCircle:{
     height: '150%',
