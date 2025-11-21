@@ -1,6 +1,5 @@
-import { ThemedView } from '@/components/ThemedView';
 import React, { useState } from 'react';
-import { StyleSheet, TouchableOpacity} from 'react-native';
+import { StyleSheet, TouchableOpacity, View} from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import {ThemedIcons} from '@/components/ThemedIcons';
 import { useThemeColor } from '@/hooks/useThemeColor';
@@ -10,15 +9,18 @@ import NearbyHelpSection from './nearbyHelp';
 export default function SafetyScreen() {
   const iconColor = useThemeColor({}, 'icon');
   const secondaryColor = useThemeColor({}, 'secondary');
+  const backgroundColor = useThemeColor({}, 'primary');
   const [selectedTab, setSelectedTab] = useState('sos');
 
   return (
     <>
-      <ThemedView style={{flex:1}}>
-        {selectedTab === 'sos' && <SOSSection />}
-        {selectedTab === 'nearbyHelp' && <NearbyHelpSection />}
-      </ThemedView>
-      <ThemedView color='primary' style={styles.tabBar}>
+      <View style={selectedTab === 'sos' ? {flex: 1} : {flex: 0, overflow: 'hidden'}}>
+        <SOSSection />
+      </View>
+      <View style={selectedTab === 'nearbyHelp' ? {flex: 1} : {flex: 0}}>
+        <NearbyHelpSection />
+      </View>
+      <View style={[styles.tabBar, {backgroundColor}]}>
         <TouchableOpacity style={styles.tabButton} onPress={() => setSelectedTab('sos')}>
           <ThemedIcons
             name={selectedTab === 'sos' ? 'alert-circle' : 'alert-circle-outline'}
@@ -39,7 +41,7 @@ export default function SafetyScreen() {
             Nearby Help
           </ThemedText>
         </TouchableOpacity>
-      </ThemedView>
+      </View>
     </>
   );
 }

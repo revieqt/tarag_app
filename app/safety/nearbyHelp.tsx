@@ -206,7 +206,7 @@ export default function NearbyHelpSection() {
           horizontal 
           showsHorizontalScrollIndicator={false} 
           style={styles.amenitiesButtonsContainer}
-          contentContainerStyle={{paddingHorizontal: 16, gap: 12}}
+          contentContainerStyle={{paddingHorizontal: 16, gap: 7}}
         >
           {locationLoading ? (
             <>
@@ -287,7 +287,7 @@ export default function NearbyHelpSection() {
                     color={selectedAmenityType === 'fire_station' ? 'white' : undefined}
                   />
                   <ThemedText style={selectedAmenityType === 'fire_station' ? {color: 'white'} : undefined}>
-                    Fire
+                    Fire Department
                   </ThemedText>
                 </ThemedView>
               </TouchableOpacity>
@@ -333,13 +333,14 @@ export default function NearbyHelpSection() {
 
 const styles = StyleSheet.create({
   amenitiesButtonsContainer: {
-    paddingVertical: 5,
+    paddingTop: 5,
+    paddingBottom: 10,
   },
   amenitiesButton: {
     paddingVertical: 7,
-    paddingHorizontal: 15,
+    paddingHorizontal: 14,
     flexDirection: 'row',
-    gap: 7,
+    gap: 5,
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 25,
