@@ -226,7 +226,7 @@ export default function NearbyHelpSection() {
         >
           {locationLoading ? (
             <>
-              <ThemedView color='primary' shadow style={styles.amenitiesButton}>
+              <ThemedView color='primary' style={styles.amenitiesButton}>
                 <ActivityIndicator size={20}/>
                 <ThemedText>Looking for the nearest amenity</ThemedText>
               </ThemedView>
@@ -238,24 +238,19 @@ export default function NearbyHelpSection() {
                   fetchAmenities('hospital');
                   setSelectedAmenityType('hospital');
                 }}
+                style={[
+                  styles.amenitiesButton, 
+                  selectedAmenityType === 'hospital' ? {backgroundColor: 'red'} : {backgroundColor: primaryColor}
+                ]}
               >
-                <ThemedView 
-                  color='primary' 
-                  shadow 
-                  style={[
-                    styles.amenitiesButton, 
-                    selectedAmenityType === 'hospital' && {backgroundColor: 'red'}
-                  ]}
-                >
-                  <ThemedIcons 
-                    name='hospital-box' 
-                    size={20}
-                    color={selectedAmenityType === 'hospital' ? 'white' : undefined}
-                  />
-                  <ThemedText style={selectedAmenityType === 'hospital' ? {color: 'white'} : undefined}>
-                    Medical
-                  </ThemedText>
-                </ThemedView>
+                <ThemedIcons 
+                  name='hospital-box' 
+                  size={20}
+                  color={selectedAmenityType === 'hospital' ? 'white' : undefined}
+                />
+                <ThemedText style={selectedAmenityType === 'hospital' ? {color: 'white'} : undefined}>
+                  Medical
+                </ThemedText>
               </TouchableOpacity>
               
               <TouchableOpacity 
@@ -263,24 +258,19 @@ export default function NearbyHelpSection() {
                   fetchAmenities('police');
                   setSelectedAmenityType('police');
                 }}
+                style={[
+                  styles.amenitiesButton, 
+                  selectedAmenityType === 'police' ? {backgroundColor: 'blue'} : {backgroundColor: primaryColor}
+                ]}
               >
-                <ThemedView 
-                  color='primary' 
-                  shadow 
-                  style={[
-                    styles.amenitiesButton, 
-                    selectedAmenityType === 'police' && {backgroundColor: 'blue'}
-                  ]}
-                >
-                  <ThemedIcons 
-                    name='police-badge' 
-                    size={20}
-                    color={selectedAmenityType === 'police' ? 'white' : undefined}
-                  />
-                  <ThemedText style={selectedAmenityType === 'police' ? {color: 'white'} : undefined}>
-                    Police
-                  </ThemedText>
-                </ThemedView>
+                <ThemedIcons 
+                  name='police-badge' 
+                  size={20}
+                  color={selectedAmenityType === 'police' ? 'white' : undefined}
+                />
+                <ThemedText style={selectedAmenityType === 'police' ? {color: 'white'} : undefined}>
+                  Police
+                </ThemedText>
               </TouchableOpacity>
               
               <TouchableOpacity 
@@ -288,24 +278,19 @@ export default function NearbyHelpSection() {
                   fetchAmenities('fire_station');
                   setSelectedAmenityType('fire_station');
                 }}
+                style={[
+                  styles.amenitiesButton, 
+                  selectedAmenityType === 'fire_station' ? {backgroundColor: 'orange'} : {backgroundColor: primaryColor}
+                ]}
               >
-                <ThemedView 
-                  color='primary' 
-                  shadow 
-                  style={[
-                    styles.amenitiesButton, 
-                    selectedAmenityType === 'fire_station' && {backgroundColor: 'orange'}
-                  ]}
-                >
-                  <ThemedIcons 
-                    name='fire' 
-                    size={20}
-                    color={selectedAmenityType === 'fire_station' ? 'white' : undefined}
-                  />
-                  <ThemedText style={selectedAmenityType === 'fire_station' ? {color: 'white'} : undefined}>
-                    Fire Department
-                  </ThemedText>
-                </ThemedView>
+                <ThemedIcons 
+                  name='fire' 
+                  size={20}
+                  color={selectedAmenityType === 'fire_station' ? 'white' : undefined}
+                />
+                <ThemedText style={selectedAmenityType === 'fire_station' ? {color: 'white'} : undefined}>
+                  Fire Department
+                </ThemedText>
               </TouchableOpacity>
               </>
             )}

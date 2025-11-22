@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from "react";
-import { View, Text, StyleSheet, Animated, Easing } from "react-native";
+import { View,  StyleSheet, Animated, Easing } from "react-native";
 import { ThemedText } from "./ThemedText";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
@@ -57,7 +57,7 @@ export const ExpBadge = ({ expPoints }: { expPoints: number }) => {
         <MaterialCommunityIcons
           name={levelInfo.icon as any}
           size={28}
-          color="#222"
+          color="#fff"
         />
       </View>
     </View>
@@ -140,8 +140,8 @@ const styles = StyleSheet.create({
   },
 
   progressBackground: {
-    height: 5,
-    backgroundColor: "#E0E0E0",
+    height: 3,
+    backgroundColor: "#ccc4",
     borderRadius: 10,
     overflow: "hidden",
   },

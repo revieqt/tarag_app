@@ -3,8 +3,50 @@
     "name": "TaraG",
     "slug": "tarag_app",
     "scheme": "taragapp",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "splash": {
+      "image": "./assets/images/icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0065F8"
+    },
+    "ios": {
+      "bundleIdentifier": "com.taragapp",
+      "supportsTablet": true,
+      "googleMobileAdsAppId": "ca-app-pub-8325794315541816~2492770428",
+      "config": {
+        "googleMapsApiKey": "AIzaSyDI_dL8xl7gnjcPps-CXgDJM9DtF3oZPVI"
+      }
+    },
     "android": {
-      "package": "com.taragapp"
-    }
+      "package": "com.taragapp",
+      "versionCode": 1,
+      "googleMobileAdsAppId": "ca-app-pub-8325794315541816~1418527751",
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyDI_dL8xl7gnjcPps-CXgDJM9DtF3oZPVI"
+        }
+      },
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "INTERNET",
+        "VIBRATE",
+        "SYSTEM_ALERT_WINDOW",
+        "RECORD_AUDIO",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
+      ]
+    },
+    "plugins": [
+      [
+        "react-native-google-mobile-ads",
+        {
+          "androidAppId": "ca-app-pub-8325794315541816~1418527751",
+          "iosAppId": "ca-app-pub-8325794315541816~2492770428"
+        }
+      ]
+    ]
   }
 }

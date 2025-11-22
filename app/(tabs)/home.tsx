@@ -10,9 +10,13 @@ import ThemedIcons from '@/components/ThemedIcons';
 import { TARA_MESSAGES } from '@/constants/Config';
 import Wave from '@/components/Wave';
 import HomeMap from '@/components/maps/HomeMap';
+import Banner from '@/components/ads/BannerAd';
+import { useInternetConnection } from '@/utils/checkInternetConnection';
+import {ExpBadge, ExpLevel, ExpProgress} from '@/components/ExpFeature';
 
 export default function HomeScreen() {
   const { session } = useSession();
+  const isConnected = useInternetConnection();
   const user = session?.user;
   const backgroundColor = useThemeColor({}, 'background');
   const primaryColor = useThemeColor({}, 'primary');
@@ -197,14 +201,14 @@ export default function HomeScreen() {
           />
         </View>
         
-        <View style={{paddingHorizontal: 16, zIndex: 1000, paddingBottom: 2000, backgroundColor}}>
+        <View style={{paddingHorizontal: 16, zIndex: 1000, paddingBottom: 150, backgroundColor}}>
           <View style={styles.menu}>
             <TouchableOpacity style={[styles.menuOptions, {backgroundColor: secondaryColor}]} onPress={() => router.push('/routes/routes')}>
               <ThemedIcons name="map-marker-radius" size={25} color='#fff'/>
               <ThemedText style={styles.menuOptionText}>Routes</ThemedText>
             </TouchableOpacity>
 
-            <TouchableOpacity style={[styles.menuOptions, {backgroundColor: secondaryColor}]} onPress={() => []}>
+            <TouchableOpacity style={[styles.menuOptions, {backgroundColor: secondaryColor}]} onPress={() => router.push('/itineraries/itineraries')}>
               <ThemedIcons name="calendar" size={25} color='#fff'/>
               <ThemedText style={styles.menuOptionText}>Itineraries</ThemedText>
             </TouchableOpacity>
@@ -283,7 +287,23 @@ export default function HomeScreen() {
                 </TouchableOpacity>
               </ThemedView>
             </View>
-          </View>        
+          </View>
+
+          <ThemedView style={styles.badgeContainer} color='primary'>
+            <ExpBadge expPoints={user?.expPoints || 0}/>
+            <View style={styles.progressContainer}>
+              <ExpLevel expPoints={user?.expPoints || 0} />
+              <ExpProgress expPoints={user?.expPoints || 0} />
+            </View>
+          </ThemedView>
+
+          {!user?.isProUser && isConnected && 
+            <ThemedView style={styles.adContainer} color='primary' shadow>
+              <Banner />
+            </ThemedView>
+          }
+             
+            
         </View>
       </ScrollView>
     </ThemedView>
@@ -370,11 +390,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     width: '100%',
     justifyContent: 'space-between',
-    marginBottom: 16,
+    marginBottom: 10,
     zIndex: 2000
   },
   menuOptions:{
-    width: Dimensions.get('window').width * 0.21,
+    width: Dimensions.get('window').width * 0.215,
     aspectRatio: 1,
     justifyContent: 'center',
     alignItems: 'center',
@@ -444,5 +464,31 @@ const styles = StyleSheet.create({
     bottom: '-45%',
     right: '-15%',
     opacity: .8,
+  },
+  adContainer:{
+    width: '100%',
+    padding: 10,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+    overflow: 'hidden',
+  },
+  badgeContainer:{
+    width: '100%',
+    padding: 10,
+    marginBottom: 16,
+    overflow: 'hidden',
+    borderRadius: 12,
+    justifyContent: 'center',
+  },
+  progressContainer:{
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 70,
+    right: 0,
+    justifyContent: 'center',
+    paddingHorizontal: 16,
   },
 });

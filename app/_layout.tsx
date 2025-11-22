@@ -7,9 +7,10 @@ import { ThemeProvider } from '@/context/ThemeContext';
 import { SessionProvider } from '@/context/SessionContext';
 import { View } from 'react-native';
 import { RouteProvider } from '@/context/RouteContext';
-// import * as SplashScreen from 'expo-splash-screen';
+import mobileAds from 'react-native-google-mobile-ads';
+import * as SplashScreen from 'expo-splash-screen';
 
-// SplashScreen.preventAutoHideAsync();
+SplashScreen.preventAutoHideAsync();
 
 export {
   ErrorBoundary,
@@ -25,15 +26,17 @@ export default function RootLayout() {
     if (error) throw error;
   }, [error]);
 
-  // useEffect(() => {
-  //   if (loaded) {
-  //     SplashScreen.hideAsync();
-  //   }
-  // }, [loaded]);
+  useEffect(() => {
+    if (loaded) {
+      SplashScreen.hideAsync();
+    }
+  }, [loaded]);
 
-  if (!loaded) {
-    return null;
-  }
+  useEffect(() => {
+    mobileAds()
+      .initialize()
+      .then(() => console.log('AdMob initialized'));
+  }, []);
 
   return (
     <ThemeProvider>
@@ -67,6 +70,7 @@ function AppContent() {
           <Stack.Screen name="account/profile" />
           <Stack.Screen name="account/settings-accountControl" />
           <Stack.Screen name="routes/routes" />
+          <Stack.Screen name="itineraries/itineraries" />
           <Stack.Screen name="safety/safety" />
           <Stack.Screen name="+not-found" />
         </Stack>
