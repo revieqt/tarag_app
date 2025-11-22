@@ -242,6 +242,12 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
 
     if (!session?.refreshToken) {
       console.log('❌ No refresh token available');
+      return false;
+    }
+
+    // Check if refresh token itself is expired
+    if (isTokenExpired(session.refreshToken)) {
+      console.log('❌ Refresh token expired, clearing session');
       await clearSession();
       return false;
     }
@@ -268,7 +274,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       return true;
     } catch (error) {
       console.error('❌ Token refresh failed:', error);
-      await clearSession();
+      // Only clear session on actual refresh failure, not on every refresh attempt
       return false;
     } finally {
       isRefreshingRef.current = false;
@@ -291,9 +297,11 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       clearTimeout(refreshTimeoutRef.current);
     }
     
-    console.log(`⏰ Scheduling token refresh in ${Math.floor(timeUntilRefresh / 1000 / 60)} minutes`);
+    const minutesUntilRefresh = Math.floor(timeUntilRefresh / 1000 / 60);
+    console.log(`⏰ Scheduling token refresh in ${minutesUntilRefresh} minutes (${Math.floor(timeUntilRefresh / 1000)} seconds)`);
     
     refreshTimeoutRef.current = setTimeout(() => {
+      console.log('⏰ Token refresh scheduled time reached, refreshing...');
       handleTokenRefresh();
     }, timeUntilRefresh);
   };

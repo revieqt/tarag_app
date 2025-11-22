@@ -70,7 +70,9 @@ function AppContent() {
           <Stack.Screen name="account/profile" />
           <Stack.Screen name="account/settings-accountControl" />
           <Stack.Screen name="routes/routes" />
+          <Stack.Screen name="routes/routes-create" />
           <Stack.Screen name="itineraries/itineraries" />
+          <Stack.Screen name="itineraries/itineraries-create" />
           <Stack.Screen name="safety/safety" />
           <Stack.Screen name="+not-found" />
         </Stack>

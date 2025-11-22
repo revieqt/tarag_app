@@ -35,24 +35,13 @@ export default function HomeScreen() {
 
   // Typewriter effect function
   const typewriterEffect = (message: string) => {
-    setDisplayedMessage('');
-    let currentIndex = 0;
-    
-    const typeInterval = setInterval(() => {
-      if (currentIndex < message.length) {
-        setDisplayedMessage(message.substring(0, currentIndex + 1));
-        currentIndex++;
-      } else {
-        clearInterval(typeInterval);
-      }
-    }, 50); // 50ms delay between each character
-    
-    return typeInterval;
+    setDisplayedMessage(message);
   };
 
   // Function to show message bubble
   const showMessageBubble = () => {
     const message = getRandomMessage();
+    setDisplayedMessage(message);
     setShowBubble(true);
 
     // Fade in
@@ -60,13 +49,9 @@ export default function HomeScreen() {
       toValue: 1,
       duration: 300,
       useNativeDriver: true,
-    }).start(() => {
-      // Start typewriter effect after fade in completes
-      typewriterEffect(message);
-    });
+    }).start();
 
-    // Auto hide after message is fully typed + 5 seconds
-    const hideDelay = (message.length * 50) + 5000; // typewriter time + 5 seconds
+    // Auto hide after 5 seconds
     setTimeout(() => {
       Animated.timing(bubbleOpacity, {
         toValue: 0,
@@ -76,7 +61,7 @@ export default function HomeScreen() {
         setShowBubble(false);
         setDisplayedMessage('');
       });
-    }, hideDelay);
+    }, 5000);
   };
 
   // Function to handle Tara image tap

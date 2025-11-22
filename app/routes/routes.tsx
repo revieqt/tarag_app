@@ -68,8 +68,8 @@ export default function ExploreScreen() {
           <View style={styles.optionsContainer}>
             <TouchableOpacity 
               style={[styles.options, {opacity: isConnected ? 1 : 0.5}]}
-              onPress={() => router.push('routes-create')}
-              disabled={!isConnected || activeRoute !== null}
+              onPress={() => router.push('/routes/routes-create')}
+              disabled={!isConnected }
             >
               <ThemedIcons name='map-marker-radius' size={30} color='#0065F8'/>
               <ThemedText style={{marginTop: 7}}>Create a Route</ThemedText>

@@ -34,7 +34,7 @@ export default function AccountScreen() {
   const [showSupport, setShowSupport] = useState(false);
   const [devMode, setDevMode] = useState(false);
   const [isFetchingAlerts, setIsFetchingAlerts] = useState(false);
-  const isConnected = !useInternetConnection();
+  const isConnected = useInternetConnection();
 
   const fullName = [user?.fname, user?.lname].filter(Boolean).join(' ');
 
