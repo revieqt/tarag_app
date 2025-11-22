@@ -12,6 +12,7 @@ import { useInternetConnection } from '@/utils/checkInternetConnection';
 import React, { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useRoute } from '@/context/RouteContext';
+import GradientBlobs from '@/components/GradientBlobs';
 
 export default function ExploreScreen() {
   const backgroundColor = useThemeColor({}, 'background');
@@ -25,17 +26,36 @@ export default function ExploreScreen() {
     <>
       <ThemedView style={{flex: 1}}>
         <ScrollView contentContainerStyle={{flexGrow: 1}}>
+          <OptionsPopup
+            key="settings"
+            style={styles.settingsButton}
+            options={[
+              <TouchableOpacity style={styles.settingsOption}>
+                <ThemedIcons name='delete' size={18}/>
+                <ThemedText style={{marginLeft: 10}}>Clear Route History</ThemedText>
+              </TouchableOpacity>,
+              !isConnected && <TouchableOpacity 
+                style={styles.settingsOption}>
+                <ThemedIcons name='information' size={18}/>
+                <ThemedText style={{marginLeft: 10}}>Route Guide</ThemedText>
+              </TouchableOpacity>
+            ]}
+          >
+            <ThemedIcons name='dots-vertical' size={20} color='#fff'/>
+          </OptionsPopup>
           <ThemedView color='secondary' style={styles.headerContainer}>
+            <GradientBlobs/>
             <BackButton style={{padding: 16}} color='#fff'/>
-              <View style={styles.activeRouteContainer}>
-                <EmptyMessage
-                  iconName="map-search"
-                  title="No Active Route"
-                  description="Start a new route to begin tracking your journey." 
-                  isWhite
-                  isSolid
-                />
-              </View>
+            
+            <View style={styles.activeRouteContainer}>
+              <EmptyMessage
+                iconName="map-search"
+                title="No Active Route"
+                description="Start a new route to begin tracking your journey." 
+                isWhite
+                isSolid
+              />
+            </View>
             <Wave color={backgroundColor}/>
           </ThemedView>
         </ScrollView>
@@ -88,6 +108,19 @@ export default function ExploreScreen() {
 
 const styles = StyleSheet.create({
   headerContainer: {
+    overflow: 'hidden',
+  },
+  settingsButton: {
+    position: 'absolute',
+    top: 5,
+    right: 0,
+    padding: 16,
+    zIndex: 10,
+  },
+  settingsOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex:1
   },
   activeRouteContainer: {
     marginHorizontal: 16,

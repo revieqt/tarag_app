@@ -17,6 +17,7 @@ export default function HomeScreen() {
   const backgroundColor = useThemeColor({}, 'background');
   const primaryColor = useThemeColor({}, 'primary');
   const accentColor = useThemeColor({}, 'accent');
+  const secondaryColor = useThemeColor({}, 'secondary');
   const floatAnimation = useRef(new Animated.Value(0)).current;
   
   const [displayedMessage, setDisplayedMessage] = useState('');
@@ -198,22 +199,22 @@ export default function HomeScreen() {
         
         <View style={{paddingHorizontal: 16, zIndex: 1000, paddingBottom: 2000, backgroundColor}}>
           <View style={styles.menu}>
-            <TouchableOpacity style={[styles.menuOptions, {backgroundColor: accentColor}]} onPress={() => router.push('/routes/routes')}>
+            <TouchableOpacity style={[styles.menuOptions, {backgroundColor: secondaryColor}]} onPress={() => router.push('/routes/routes')}>
               <ThemedIcons name="map-marker-radius" size={25} color='#fff'/>
               <ThemedText style={styles.menuOptionText}>Routes</ThemedText>
             </TouchableOpacity>
 
-            <TouchableOpacity style={[styles.menuOptions, {backgroundColor: accentColor}]} onPress={() => []}>
+            <TouchableOpacity style={[styles.menuOptions, {backgroundColor: secondaryColor}]} onPress={() => []}>
               <ThemedIcons name="calendar" size={25} color='#fff'/>
               <ThemedText style={styles.menuOptionText}>Itineraries</ThemedText>
             </TouchableOpacity>
 
-            <TouchableOpacity style={[styles.menuOptions, {backgroundColor: accentColor}]} onPress={() => router.push('/safety/safety')}>
+            <TouchableOpacity style={[styles.menuOptions, {backgroundColor: secondaryColor}]} onPress={() => router.push('/safety/safety')}>
               <ThemedIcons name="shield-plus" size={25} color='#fff'/>
               <ThemedText style={styles.menuOptionText}>Safety</ThemedText>
             </TouchableOpacity>
 
-            <TouchableOpacity style={[styles.menuOptions, {backgroundColor: accentColor}]} onPress={() => []}>
+            <TouchableOpacity style={[styles.menuOptions, {backgroundColor: secondaryColor}]} onPress={() => []}>
               <ThemedIcons name="robot" size={25} color='#fff'/>
               <ThemedText style={styles.menuOptionText}>TaraAI</ThemedText>
             </TouchableOpacity>

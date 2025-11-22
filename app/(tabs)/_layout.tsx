@@ -22,7 +22,7 @@ function TabBarLabel({ children, color }: { children: React.ReactNode; color: st
 
 export default function TabLayout() {
   const primaryColor = useThemeColor({}, 'primary');
-  const secondaryColor = useThemeColor({}, 'secondary');
+  const secondaryColor = useThemeColor({}, 'accent');
 
   return (
     <Tabs

@@ -1,13 +1,11 @@
-import Button from '@/components/Button';
 import { ThemedIcons } from '@/components/ThemedIcons';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { BACKEND_URL } from '@/constants/Config';
 import { useLocation } from '@/hooks/useLocation';
 import React, { useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, TouchableOpacity, View, Alert } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, TouchableOpacity, View, Alert, Linking } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
-import { useSession } from '@/context/SessionContext';
 import { router } from 'expo-router';
 // import { generateRouteWithLocations } from '@/services/routeApiService';
 import WaveHeader from '@/components/WaveHeader';
@@ -18,12 +16,18 @@ import { useThemeColor } from '@/hooks/useThemeColor';
 
 export default function NearbyHelpSection() {
   const { latitude, longitude, loading: locationLoading } = useLocation();
-  const { session, updateSession } = useSession();
   const [amenities, setAmenities] = useState<any[]>([]);
   const [amenityLoading, setAmenityLoading] = useState(false);
   const [amenityError, setAmenityError] = useState<string | null>(null);
   const [selectedAmenityType, setSelectedAmenityType] = useState<string | null>(null);
   const primaryColor = useThemeColor({}, 'primary');
+  const backgroundColor = useThemeColor({}, 'background');
+
+  const handleCallAmenity = (phone: string) => {
+    Linking.openURL(`tel:${phone}`).catch(() => {
+      Alert.alert('Error', 'Unable to open phone dialer');
+    });
+  };
 
 //   const handleGetDirection = async (amenity: any) => {
 //     if (session?.activeRoute) {
@@ -135,60 +139,72 @@ export default function NearbyHelpSection() {
   };
 
   const renderAmenityCard = (amenity: any, index: number) => (
-    <ThemedView key={amenity.id || index} color='primary' shadow style={styles.amenityCard}>
-        <MapView
-            style={{flex: 1}}
-            initialRegion={{
-            latitude: amenity.latitude,
-            longitude: amenity.longitude,
-            latitudeDelta: 0.01,
-            longitudeDelta: 0.01,
-            }}
-            scrollEnabled={false}
-            zoomEnabled={false}
-            rotateEnabled={false}
-            pitchEnabled={false}
-        >
-            <Marker
-            coordinate={{
-                latitude: amenity.latitude,
-                longitude: amenity.longitude,
-            }}
-            title={amenity.name}
-            />
-        </MapView>
+    <View key={amenity.id || index} style={styles.amenityCard}>
+      <MapView
+        style={{width: '100%', height: 180}}
+        initialRegion={{
+        latitude: amenity.latitude,
+        longitude: amenity.longitude,
+        latitudeDelta: 0.01,
+        longitudeDelta: 0.01,
+        }}
+        scrollEnabled={false}
+        zoomEnabled={false}
+        rotateEnabled={false}
+        pitchEnabled={false}
+      >
+        <Marker
+          coordinate={{latitude: amenity.latitude,longitude: amenity.longitude,}}
+          title={amenity.name}
+        />
+      </MapView>
 
-        <LinearGradient
-            colors={['transparent', primaryColor, primaryColor]}
-            style={styles.amenityDescription}
-        >
-            <ThemedText>{amenity.name}</ThemedText>
-            {amenity.address && (
-            <View style={styles.infoRow}>
-                <ThemedIcons name="map-marker" size={16}/>
-                <ThemedText numberOfLines={2}>
-                {amenity.address}
-                </ThemedText>
-            </View>
-            )}
-            {amenity.phone && (
-            <View style={styles.infoRow}>
-                <ThemedIcons name="phone" size={16}/>
-                <ThemedText>
-                {amenity.phone}
-                </ThemedText>
-            </View>
-            )}
-            {amenity.website && (
-            <View style={styles.infoRow}>
-                <ThemedIcons name="language" size={16}/>
-                <ThemedText numberOfLines={1}>
-                {amenity.website}
-                </ThemedText>
-            </View>
-            )}
-        </LinearGradient>
-    </ThemedView>
+      <LinearGradient
+        colors={['transparent', primaryColor, primaryColor]}
+        style={styles.amenityDescription}
+      >
+        <ThemedText>{amenity.name}</ThemedText>
+        {amenity.address && (
+        <View style={styles.infoRow}>
+          <ThemedIcons name="map-marker" size={16}/>
+          <ThemedText numberOfLines={2}>
+          {amenity.address}
+          </ThemedText>
+        </View>
+        )}
+        {amenity.phone && (
+        <View style={styles.infoRow}>
+          <ThemedIcons name="phone" size={16}/>
+          <ThemedText>
+          {amenity.phone}
+          </ThemedText>
+        </View>
+        )}
+        {amenity.website && (
+        <View style={styles.infoRow}>
+          <ThemedIcons name="language" size={16}/>
+          <ThemedText numberOfLines={1}>
+          {amenity.website}
+          </ThemedText>
+        </View>
+        )}
+        <View style={styles.amenityCardButtons}>
+          {amenity.phone && (
+            <TouchableOpacity 
+              style={[styles.amenitiesButton, {backgroundColor}]}
+              onPress={() => handleCallAmenity(amenity.phone)}
+            >
+              <ThemedIcons name='phone' size={15}/>
+              <ThemedText style={{fontSize: 11}}>Call</ThemedText>
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity style={[styles.amenitiesButton,{backgroundColor}]}>
+            <ThemedIcons name='directions' size={15}/>
+              <ThemedText style={{fontSize: 11}}>Directions</ThemedText>
+          </TouchableOpacity>
+        </View>
+      </LinearGradient>
+    </View>
   );
 
   return (
@@ -349,20 +365,17 @@ const styles = StyleSheet.create({
     paddingBottom: 200,
   },
   loadingContainer: {
-    marginVertical: 10,
-    marginHorizontal: 16,
-    borderRadius: 12,
-    height: 200,
+    marginVertical: 7,
+    height: 220,
+    overflow: 'hidden',
   },
   errorContainer: {
     alignItems: 'center',
     paddingVertical: 20,
   },
   amenityCard: {
-    marginVertical: 10,
-    marginHorizontal: 16,
-    borderRadius: 12,
-    height: 200,
+    marginVertical: 7,
+    height: 220,
     overflow: 'hidden',
   },
   amenityDescription: {
@@ -376,8 +389,14 @@ const styles = StyleSheet.create({
   infoRow: {
     alignItems: 'center',
     flexDirection: 'row',
-    marginTop: 6,
+    marginTop: 5,
     gap: 8,
     opacity: 0.5,
   },
+  amenityCardButtons: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 7,
+    marginTop: 5,
+  }
 });

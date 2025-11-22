@@ -8,7 +8,7 @@ import NearbyHelpSection from './nearbyHelp';
 
 export default function SafetyScreen() {
   const iconColor = useThemeColor({}, 'icon');
-  const secondaryColor = useThemeColor({}, 'secondary');
+  const secondaryColor = useThemeColor({}, 'accent');
   const backgroundColor = useThemeColor({}, 'primary');
   const [selectedTab, setSelectedTab] = useState('sos');
 
