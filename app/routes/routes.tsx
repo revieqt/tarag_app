@@ -17,7 +17,7 @@ import GradientBlobs from '@/components/GradientBlobs';
 export default function ExploreScreen() {
   const backgroundColor = useThemeColor({}, 'background');
   const buttonColor = useThemeColor({}, 'secondary');
-  const isConnected = !useInternetConnection();
+  const isConnected = useInternetConnection();
   const [showNoInternetAlert, setShowNoInternetAlert] = useState(false);
   const router = useRouter();
   const { activeRoute } = useRoute();

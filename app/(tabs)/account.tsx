@@ -34,8 +34,7 @@ export default function AccountScreen() {
   const [showSupport, setShowSupport] = useState(false);
   const [devMode, setDevMode] = useState(false);
   const [isFetchingAlerts, setIsFetchingAlerts] = useState(false);
-  const isConnected = useInternetConnection();
-  const [showNoInternetAlert, setShowNoInternetAlert] = useState(false);
+  const isConnected = !useInternetConnection();
 
   const fullName = [user?.fname, user?.lname].filter(Boolean).join(' ');
 
@@ -129,15 +128,6 @@ export default function AccountScreen() {
             </View>
           </TouchableOpacity>
         </ThemedView>
-
-        {isConnected ? (<>
-        
-        </>):(<>
-          <ThemedView style={styles.noInternetBanner} color='primary'>
-            <ThemedText style={{textAlign: 'center', opacity: .7}}>You have no Internet connection. Some features might be unavailable</ThemedText>
-          </ThemedView>
-        </>)}
-
         {/* {renderProUpgrade()} */}
         {/* Options */}
         <View style={styles.options}>
@@ -146,45 +136,51 @@ export default function AccountScreen() {
           </ThemedText>
           {renderMapTypeSettings()}
           {renderSystemTheme()}
-          {isConnected && (<>
-            <ThemedText style={styles.optionsTitle}>
-              Privacy and Legal
-            </ThemedText>
-            <TouchableOpacity
-              onPress={() => router.push('/account/settings-accountControl')}
-              style={styles.optionsChild}
-            >
-              <ThemedIcons name='key' size={15} />
-              <ThemedText>Account Control</ThemedText>
-            </TouchableOpacity>
+          <ThemedText style={styles.optionsTitle}>
+            Privacy and Legal
+          </ThemedText>
+          <TouchableOpacity
+            onPress={() => router.push('/account/settings-accountControl')}
+            style={[styles.optionsChild, !isConnected && {opacity: 0.5}]}
+            disabled={!isConnected}>
+            <ThemedIcons name='key' size={15} />
+            <ThemedText>Account Control</ThemedText>
+          </TouchableOpacity>
 
-            <TouchableOpacity onPress={() => openDocument('privacyPolicy-mobileApp')} style={styles.optionsChild}>
-              <ThemedIcons name='file-eye' size={15} />
-              <ThemedText>Privacy Policy</ThemedText>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => openDocument('terms-mobileApp')} style={styles.optionsChild}>
-              <ThemedIcons name='file-alert' size={15} />
-              <ThemedText>Terms and Conditions</ThemedText>
-            </TouchableOpacity>
-          </>)}
+          <TouchableOpacity onPress={() => openDocument('privacyPolicy-mobileApp')}
+            style={[styles.optionsChild, !isConnected && {opacity: 0.5}]}
+            disabled={!isConnected}>
+            <ThemedIcons name='file-eye' size={15} />
+            <ThemedText>Privacy Policy</ThemedText>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => openDocument('terms-mobileApp')}
+            style={[styles.optionsChild, !isConnected && {opacity: 0.5}]}
+            disabled={!isConnected}>
+            <ThemedIcons name='file-alert' size={15} />
+            <ThemedText>Terms and Conditions</ThemedText>
+          </TouchableOpacity>
 
           <ThemedText style={styles.optionsTitle}>
             Help and Support
           </ThemedText>
-          {isConnected && (<>
-            <TouchableOpacity onPress={() => isConnected ? openDocument('manual-mobileApp'): setShowNoInternetAlert(true)} style={styles.optionsChild}>
-              <ThemedIcons name='file-find' size={15} />
-              <ThemedText>App Manual</ThemedText>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => isConnected ? setShowSupport(true): setShowNoInternetAlert(true)} style={styles.optionsChild}>
-              <ThemedIcons name='headset' size={15} />
-              <ThemedText>Contact Support</ThemedText>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => isConnected ? openDocument('about'): setShowNoInternetAlert(true)} style={styles.optionsChild}>
-              <ThemedIcons name='file-find' size={15} />
-              <ThemedText>About TaraG</ThemedText>
-            </TouchableOpacity>
-          </>)}
+          <TouchableOpacity onPress={() => openDocument('manual-mobileApp')}
+            style={[styles.optionsChild, !isConnected && {opacity: 0.5}]}
+            disabled={!isConnected}>
+            <ThemedIcons name='file-find' size={15} />
+            <ThemedText>App Manual</ThemedText>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => setShowSupport(true)}
+            style={[styles.optionsChild, !isConnected && {opacity: 0.5}]}
+            disabled={!isConnected}>
+            <ThemedIcons name='headset' size={15} />
+            <ThemedText>Contact Support</ThemedText>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => openDocument('about')}
+            style={[styles.optionsChild, !isConnected && {opacity: 0.5}]}
+            disabled={!isConnected}>
+            <ThemedIcons name='file-find' size={15} />
+            <ThemedText>About TaraG</ThemedText>
+          </TouchableOpacity>
           
           
           <Pressable 
@@ -238,7 +234,6 @@ export default function AccountScreen() {
             </>
           )}
         </View>
-
         {/* Logout Button */}
         <Button
           title='Logout'
@@ -263,18 +258,6 @@ export default function AccountScreen() {
       <LinearGradient
         colors={['transparent', primaryColor]}
         style={styles.gradient}
-      />
-
-      <CustomAlert
-        visible={showNoInternetAlert}
-        title="No Internet Connection"
-        message="Please check your connection and try again."
-        icon='alert'
-        fadeAfter={3000}
-        onClose={() => setShowNoInternetAlert(false)}
-        buttons={[
-          { text: 'OK', style: 'default', onPress: () => setShowNoInternetAlert(false) }
-        ]}
       />
     </ThemedView>
   );
@@ -338,12 +321,5 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-  },
-  noInternetBanner: {
-    width: '100%',
-    padding: 10,
-    borderRadius: 10,
-    marginBottom: 10,
-    alignItems: 'center',
   },
 });

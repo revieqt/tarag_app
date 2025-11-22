@@ -158,10 +158,8 @@ const styles = StyleSheet.create({
     fontSize: 12,
     opacity: 0.7,
   },
-
   levelText: {
     marginTop: 6,
-    fontSize: 18,
   },
 });
 

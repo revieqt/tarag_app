@@ -13,6 +13,7 @@ import BackButton from '@/components/BackButton';
 import ProfileImage from '@/components/ProfileImage';
 import GradientBlobs from '@/components/GradientBlobs';
 import { ExpBadge, ExpLevel, ExpProgress } from '@/components/ExpFeature';
+import { useInternetConnection } from '@/utils/checkInternetConnection';
 
 
 export default function ProfileScreen() {
@@ -22,6 +23,7 @@ export default function ProfileScreen() {
   const { session } = useSession();
   const [activeTab, setActiveTab] = useState<String>('travels');
   const [otherUser, setOtherUser] = useState<any>(null);
+  const isConnected = useInternetConnection();
   
   let user = session?.user;
   const isCurrentUser = !otherUserId;
@@ -80,7 +82,7 @@ export default function ProfileScreen() {
                     <ThemedText>About</ThemedText>
                   </TouchableOpacity>
                 )}
-                {isCurrentUser && (
+                {isCurrentUser && isConnected && (
                   <TouchableOpacity style={[styles.tabs, {backgroundColor: primaryColor}]}
                     onPress={() => router.push('/account/settings-accountControl')}
                   >

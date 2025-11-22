@@ -12,7 +12,6 @@ import Wave from '@/components/Wave';
 import HomeMap from '@/components/maps/HomeMap';
 import Banner from '@/components/ads/BannerAd';
 import { useInternetConnection } from '@/utils/checkInternetConnection';
-import {ExpBadge, ExpLevel, ExpProgress} from '@/components/ExpFeature';
 
 export default function HomeScreen() {
   const { session } = useSession();
@@ -218,7 +217,8 @@ export default function HomeScreen() {
               <ThemedText style={styles.menuOptionText}>Safety</ThemedText>
             </TouchableOpacity>
 
-            <TouchableOpacity style={[styles.menuOptions, {backgroundColor: secondaryColor}]} onPress={() => []}>
+            <TouchableOpacity style={[styles.menuOptions, !isConnected && {opacity:.5},{backgroundColor: secondaryColor}]} onPress={() => []}
+              disabled={!isConnected}>
               <ThemedIcons name="robot" size={25} color='#fff'/>
               <ThemedText style={styles.menuOptionText}>TaraAI</ThemedText>
             </TouchableOpacity>
@@ -288,14 +288,6 @@ export default function HomeScreen() {
               </ThemedView>
             </View>
           </View>
-
-          <ThemedView style={styles.badgeContainer} color='primary'>
-            <ExpBadge expPoints={user?.expPoints || 0}/>
-            <View style={styles.progressContainer}>
-              <ExpLevel expPoints={user?.expPoints || 0} />
-              <ExpProgress expPoints={user?.expPoints || 0} />
-            </View>
-          </ThemedView>
 
           {!user?.isProUser && isConnected && 
             <ThemedView style={styles.adContainer} color='primary' shadow>
@@ -473,22 +465,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 20,
     overflow: 'hidden',
-  },
-  badgeContainer:{
-    width: '100%',
-    padding: 10,
-    marginBottom: 16,
-    overflow: 'hidden',
-    borderRadius: 12,
-    justifyContent: 'center',
-  },
-  progressContainer:{
-    position: 'absolute',
-    top: 0,
-    bottom: 0,
-    left: 70,
-    right: 0,
-    justifyContent: 'center',
-    paddingHorizontal: 16,
   },
 });
