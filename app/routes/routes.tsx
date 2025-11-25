@@ -48,6 +48,7 @@ export default function ExploreScreen() {
             <BackButton style={{padding: 16}} color='#fff'/>
             
             <View style={styles.activeRouteContainer}>
+            {!activeRoute ? 
               <EmptyMessage
                 iconName="map-search"
                 title="No Active Route"
@@ -55,6 +56,58 @@ export default function ExploreScreen() {
                 isWhite
                 isSolid
               />
+              : (
+              <View>
+                {activeRoute?.location?.map((loc, index) => (
+                  <View key={index}>
+                    <ThemedText>
+                      {loc.locationName}
+                    </ThemedText>
+                    <ThemedText style={{opacity: .7}}>
+                      {index === 0 ? 'Start' : 
+                      index === activeRoute!.location!.length - 1 ? 'Destination' : 
+                      `Waypoint ${index}`}
+                    </ThemedText>
+                    
+                  </View>
+                ))}
+
+                
+                {activeRoute?.routeData && (
+                  <View style={styles.routeSummary}>
+                    <View style={styles.routeStats}>
+                      <View style={styles.statItem}>
+                        <ThemedIcons name="clock-time-three" size={20} color='#fff'/>
+                          <ThemedText style={{marginTop: 5}}>Duration</ThemedText>
+                          <ThemedText>
+                            {Math.round(activeRoute!.routeData!.duration / 60)} min
+                          </ThemedText>
+                      </View>
+                      
+                      <View style={styles.statItem}>
+                        <ThemedIcons name="chart-timeline-variant" size={20} color='#fff'/>
+                          <ThemedText style={{marginTop: 5}}>Distance</ThemedText>
+                          <ThemedText>
+                            {(activeRoute!.routeData!.distance / 1000).toFixed(2)} km
+                          </ThemedText>
+                      </View>
+                      
+                      <View style={styles.statItem}>
+                        <ThemedIcons name="elevation-rise" size={20} color='#fff'/>
+                          <ThemedText style={{marginTop: 5}}>Elevation</ThemedText>
+                          <ThemedText>
+                            {activeRoute!.routeData!.geometry.coordinates.some(coord => coord[2] !== undefined) 
+                              ? `${Math.round(Math.max(...activeRoute!.routeData!.geometry.coordinates.map(coord => coord[2] || 0)) - Math.min(...activeRoute!.routeData!.geometry.coordinates.map(coord => coord[2] || 0)))}m gain`
+                              : 'N/A'
+                            }
+                          </ThemedText>
+                      </View>
+                    </View>
+                  </View>
+                )}
+              
+              </View>
+            )}
             </View>
             <Wave color={backgroundColor}/>
           </ThemedView>
@@ -63,7 +116,7 @@ export default function ExploreScreen() {
       
       <OptionsPopup
         key="mapType"
-        style={[styles.optionsButton, {backgroundColor: buttonColor}]}
+        style={[styles.optionsButton, activeRoute ? {backgroundColor: buttonColor, opacity: .5} : {backgroundColor: buttonColor}]}
         options={[
           <View style={styles.optionsContainer}>
             <TouchableOpacity 
@@ -73,7 +126,8 @@ export default function ExploreScreen() {
             >
               <ThemedIcons name='map-marker-radius' size={30} color='#0065F8'/>
               <ThemedText style={{marginTop: 7}}>Create a Route</ThemedText>
-              {isConnected ? <ThemedText style={styles.optionsDescription}>Get directions to your destination.</ThemedText>
+              {isConnected ? (!activeRoute ? <ThemedText style={styles.optionsDescription}>Get directions to your destination.</ThemedText>
+              : <ThemedText style={styles.optionsDescription}>You need to end active route to start a new route.</ThemedText>)
               : <ThemedText style={styles.optionsDescription}>You need an internet connection to create a route</ThemedText>}
             </TouchableOpacity>
             <TouchableOpacity 
@@ -83,7 +137,8 @@ export default function ExploreScreen() {
             >
               <ThemedIcons name='crosshairs-gps' size={30} color='#0065F8'/>
               <ThemedText style={{marginTop: 7}}>Track my Route</ThemedText>
-              <ThemedText style={styles.optionsDescription}>Track your Route</ThemedText>
+              {!activeRoute ? <ThemedText style={styles.optionsDescription}>Track your route.</ThemedText>
+              : <ThemedText style={styles.optionsDescription}>You need to end active route to track your route.</ThemedText>}
             </TouchableOpacity>
           </View>
         ]}
@@ -155,5 +210,21 @@ const styles = StyleSheet.create({
     fontSize: 10,
     opacity: 0.7,
     textAlign: 'center',
+  },
+  routeSummary: {
+    marginVertical: 10,
+    paddingTop: 15,
+    borderTopWidth: 1,
+    borderTopColor: '#ccc4',
+  },
+  routeStats: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  statItem: {
+    marginTop: 5,
+    justifyContent: 'center',
+    alignItems: 'center',
+    flex: 1,
   },
 });

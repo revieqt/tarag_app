@@ -1,5 +1,5 @@
 import LocationAutocomplete, { LocationItem } from '@/components/LocationAutocomplete';
-import { useRef } from 'react';
+import { useRef, useEffect } from 'react';
 import MapView from 'react-native-maps';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedIcons } from '@/components/ThemedIcons';
@@ -17,6 +17,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { Polyline } from 'react-native-maps';
 import PointMarker from '@/components/maps/PointMarker';
 import Button from '@/components/Button';
+import ProcessModal from '@/components/modals/ProcessModal';
 
 const MODES = [
   { label: 'Car', value: 'driving-car', icon: 'car'},
@@ -43,20 +44,22 @@ export default function CreateRouteScreen() {
   const [skipForm, setSkipForm] = useState(false);
 
   // Initialize end location if parameters provided
-//   useEffect(() => {
-//     if (paramLatitude && paramLongitude && paramLocationName) {
-//       const location: LocationItem = {
-//         locationName: paramLocationName,
-//         latitude: parseFloat(paramLatitude),
-//         longitude: parseFloat(paramLongitude),
-//         note: ''
-//       };
-//       setEndLocation(location);
-//       setSearchedLocations([location]);
-//       setSkipForm(true);
-//       console.log('Route parameters provided, skipping form:', location);
-//     }
-//   }, [paramLatitude, paramLongitude, paramLocationName]);
+  useEffect(() => {
+    if (paramLatitude && paramLongitude && paramLocationName) {
+      const location: LocationItem = {
+        locationName: paramLocationName,
+        latitude: parseFloat(paramLatitude),
+        longitude: parseFloat(paramLongitude),
+        note: ''
+      };
+      setEndLocation(location);
+      setSearchedLocations([location]);
+      setSkipForm(true);
+      // Auto-select Car mode when coming from nearby help
+      setSelectedMode('driving-car');
+      console.log('Route parameters provided, skipping form:', location);
+    }
+  }, [paramLatitude, paramLongitude, paramLocationName]);
 
   // Auto-fit map when searched locations change (but not during route generation)
 //   useEffect(() => {
@@ -75,6 +78,14 @@ export default function CreateRouteScreen() {
   const { loading, suburb , city, latitude, longitude } = useLocation();
 
   const mapRef = useRef<MapView>(null);
+
+  // Auto-generate route when parameters are provided and dependencies are ready
+  useEffect(() => {
+    if (skipForm && selectedMode && endLocation && latitude && longitude && !isGenerating && routesData.length === 0) {
+      console.log('Auto-generating route with parameters');
+      handleGenerateRoute();
+    }
+  }, [skipForm, selectedMode, endLocation, latitude, longitude]);
 
   // Function to fit map to show all locations including route coordinates
   const fitMapToLocations = () => {
@@ -439,7 +450,7 @@ export default function CreateRouteScreen() {
               Your Location {waypoints.length > 0 && waypoints.map(wp => wp.locationName ? ` → ${wp.locationName}` : '').join('')} → {endLocation?.locationName}
             </ThemedText>
           </>
-        ) : (!skipForm && (
+        ) : (!skipForm ? (
           <>
             <View style={{flexDirection: 'row', alignItems: 'center', gap: 7, marginBottom: 10}}>
               <BackButton type='default'/>
@@ -497,6 +508,10 @@ export default function CreateRouteScreen() {
             ))}
           </ScrollView>
           </>
+        ) : (
+          <>
+            <ThemedText>Destination: {endLocation?.locationName}</ThemedText>
+          </>
         ))}
       </LinearGradient>
 
@@ -528,7 +543,8 @@ export default function CreateRouteScreen() {
             <View style={styles.otherButtonsContainer}>
               <Button
                 title="Go Back"
-                onPress={() => {
+                onPress={
+                skipForm ? () => router.back() : () => {
                   setRoutesData([]);
                   setSearchedLocations([]);
                   setEndLocation(null);
@@ -545,7 +561,7 @@ export default function CreateRouteScreen() {
               />
             </View>
           </>
-        ) : (
+        ) : (skipForm ? (
           <RoundedButton
             iconName="arrow-right"
             onPress={handleGenerateRoute}
@@ -553,7 +569,12 @@ export default function CreateRouteScreen() {
             disabled={isGenerating || !selectedMode || !endLocation}
             loading={isGenerating}
           />
-        )}
+        ) : null)}
+      
+      <ProcessModal 
+        visible={skipForm && (isGenerating || loading)}
+        success={false}
+      />
     </View>
   );
 }

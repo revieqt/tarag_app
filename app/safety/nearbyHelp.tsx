@@ -7,7 +7,6 @@ import React, { useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, TouchableOpacity, View, Alert, Linking } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import { router } from 'expo-router';
-// import { generateRouteWithLocations } from '@/services/routeApiService';
 import WaveHeader from '@/components/WaveHeader';
 import LoadingContainerAnimation from '@/components/LoadingContainerAnimation';
 import EmptyMessage from '@/components/EmptyMessage';
@@ -29,65 +28,21 @@ export default function NearbyHelpSection() {
     });
   };
 
-//   const handleGetDirection = async (amenity: any) => {
-//     if (session?.activeRoute) {
-//       Alert.alert(
-//         "Active Route Detected",
-//         "You must end the active route before creating a new one.",
-//         [{ text: "OK", style: "default" }]
-//       );
-//       return;
-//     }
-
-//     if (!latitude || !longitude || !session?.user?.id) {
-//       Alert.alert("Error", "Unable to get your location or user information.");
-//       return;
-//     }
-
-//     try {
-//       const route = await generateRouteWithLocations({
-//         startLocation: { latitude, longitude },
-//         endLocation: { latitude: amenity.latitude, longitude: amenity.longitude },
-//         waypoints: [],
-//         mode: 'driving-car',
-//         userID: session.user.id
-//       });
-
-//       if (route) {
-//         const activeRoute = {
-//           routeID: `route_${Date.now()}`,
-//           userID: session.user.id,
-//           location: [
-//             { latitude, longitude, locationName: 'Your Location' },
-//             { latitude: amenity.latitude, longitude: amenity.longitude, locationName: amenity.name }
-//           ],
-//           mode: 'driving-car',
-//           status: 'active',
-//           createdOn: new Date(),
-//           routeData: route
-//         };
-
-//         await updateSession({ activeRoute });
-//         console.log('Route to amenity created:', activeRoute);
-        
-//         // Use a more reliable navigation approach
-//         try {
-//           // Small delay to ensure state is updated
-//           await new Promise(resolve => setTimeout(resolve, 50));
-//           router.replace('/(tabs)/maps');
-//         } catch (navError) {
-//           console.error('Navigation error:', navError);
-//           // Fallback navigation
-//           router.push('/(tabs)/maps');
-//         }
-//       } else {
-//         Alert.alert("Error", "Failed to generate route. Please try again.");
-//       }
-//     } catch (error) {
-//       console.error('Error generating route to amenity:', error);
-//       Alert.alert("Error", "Failed to generate route. Please try again.");
-//     }
-//   };
+  const handleGetDirections = (amenity: any) => {
+    if (!amenity.latitude || !amenity.longitude || !amenity.name) {
+      Alert.alert('Error', 'Unable to get directions to this location.');
+      return;
+    }
+    
+    router.push({
+      pathname: '/routes/routes-create',
+      params: {
+        latitude: amenity.latitude.toString(),
+        longitude: amenity.longitude.toString(),
+        locationName: amenity.name
+      }
+    });
+  };
 
   const fetchAmenities = async (amenityType: string) => {
     if (!latitude || !longitude) {
@@ -198,9 +153,12 @@ export default function NearbyHelpSection() {
               <ThemedText style={{fontSize: 11}}>Call</ThemedText>
             </TouchableOpacity>
           )}
-          <TouchableOpacity style={[styles.amenitiesButton,{backgroundColor}]}>
+          <TouchableOpacity 
+            style={[styles.amenitiesButton,{backgroundColor}]}
+            onPress={() => handleGetDirections(amenity)}
+          >
             <ThemedIcons name='directions' size={15}/>
-              <ThemedText style={{fontSize: 11}}>Directions</ThemedText>
+            <ThemedText style={{fontSize: 11}}>Directions</ThemedText>
           </TouchableOpacity>
         </View>
       </LinearGradient>

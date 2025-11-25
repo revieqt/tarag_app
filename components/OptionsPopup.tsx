@@ -6,10 +6,11 @@ import { Animated, Easing, Modal, Pressable, StyleSheet, Text, TouchableOpacity,
 interface OptionsProps {
   options?: React.ReactNode[];
   style?: ViewStyle | ViewStyle[];
+  disabled?: boolean;
   children?: React.ReactNode;
 }
 
-const Options: React.FC<OptionsProps> = ({ options = [], style, children }) => {
+const Options: React.FC<OptionsProps> = ({ options = [], style, children, disabled=false }) => {
   const [visible, setVisible] = useState(false);
   const slideAnim = useRef(new Animated.Value(0)).current;
   const primaryColor = useThemeColor({}, 'primary');
@@ -40,7 +41,7 @@ const Options: React.FC<OptionsProps> = ({ options = [], style, children }) => {
 
   return (
     <View>
-      <TouchableOpacity onPress={handleOpen} style={[styles.optionsButton, style]}>
+      <TouchableOpacity onPress={handleOpen} style={[styles.optionsButton, style]} disabled={disabled}>
         {children ? children : <Text style={styles.buttonText}>Options</Text>}
       </TouchableOpacity>
 
