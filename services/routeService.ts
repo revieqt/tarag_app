@@ -30,7 +30,7 @@ export async function getRoutes(params: {
   location: { latitude: number; longitude: number }[];
   mode: string;
   accessToken: string;
-}): Promise<RouteData | null> {
+}): Promise<RouteData[] | null> {
   try {
     console.log('🚀 Frontend getRoutes called with:', {
       locationCount: params.location.length,
@@ -55,17 +55,22 @@ export async function getRoutes(params: {
       throw new Error(`Failed to fetch routes: ${res.status} ${errorText}`);
     }
     
-    const data: RouteData = await res.json();
+    const data = await res.json();
+    const routes: RouteData[] = data.routes || [];
     
     console.log('✅ Frontend received route data:', {
-      distance: `${(data.distance / 1000).toFixed(2)} km`,
-      duration: `${Math.round(data.duration / 60)} min`,
-      segmentCount: data.segments?.length || 0,
-      totalSteps: data.segments?.reduce((acc, seg) => acc + (seg.steps?.length || 0), 0) || 0,
-      coordinateCount: data.geometry?.coordinates?.length || 0
+      totalRoutes: routes.length,
+      routes: routes.map((r, i) => ({
+        index: i + 1,
+        distance: `${(r.distance / 1000).toFixed(2)} km`,
+        duration: `${Math.round(r.duration / 60)} min`,
+        segmentCount: r.segments?.length || 0,
+        totalSteps: r.segments?.reduce((acc, seg) => acc + (seg.steps?.length || 0), 0) || 0,
+        coordinateCount: r.geometry?.coordinates?.length || 0
+      }))
     });
     
-    return data;
+    return routes;
   } catch (err) {
     console.error('❌ Frontend getRoutes error:', err);
     return null;

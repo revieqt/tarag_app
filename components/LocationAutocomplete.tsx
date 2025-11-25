@@ -149,10 +149,17 @@ const LocationAutocomplete: React.FC<LocationAutocompleteProps> = ({ value, onSe
             <ActivityIndicator size="small"/>
           ) : (
             <ThemedIcons 
-              name={showDropdown && suggestions.length > 0 ? "keyboard-hide" : "search"} 
+              name={showDropdown && suggestions.length > 0 ? "apple-keyboard-control" : "magnify"} 
               size={20}
             />
           )}
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.mapButton}>
+          <ThemedIcons 
+            name='map-search'
+            size={20}
+            style={styles.mapIcon}
+          />
         </TouchableOpacity>
       </View>
       {showDropdown && suggestions.length > 0 && (
@@ -199,11 +206,11 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   textField: {
-    paddingRight: 50, // Make space for the search button
+    paddingRight: 80, // Make space for the search button
   },
   searchButton: {
     position: 'absolute',
-    right: 8,
+    right: 40,
     top: 8,
     width: 32,
     height: 32,
@@ -231,6 +238,23 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     minHeight: 44,
   },
+  mapButton:{
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 40,
+    
+  },
+  mapIcon:{
+    padding: 5,
+    backgroundColor: 'rgba(0,0,0,0.1)',
+    borderTopRightRadius: 10,
+    borderBottomRightRadius: 10,
+    zIndex: 11,
+  }
 });
 
 export default LocationAutocomplete; 

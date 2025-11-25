@@ -33,12 +33,6 @@ export default function HomeScreen() {
     return TARA_MESSAGES[randomIndex];
   };
 
-  // Typewriter effect function
-  const typewriterEffect = (message: string) => {
-    setDisplayedMessage(message);
-  };
-
-  // Function to show message bubble
   const showMessageBubble = () => {
     const message = getRandomMessage();
     setDisplayedMessage(message);
@@ -381,7 +375,7 @@ const styles = StyleSheet.create({
     zIndex: 1002
   },
   menuOptionText:{
-    fontSize: 11,
+    fontSize: 10,
     marginTop: 5,
     color: '#fff'
   },

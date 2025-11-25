@@ -2,11 +2,10 @@ import LocationAutocomplete, { LocationItem } from '@/components/LocationAutocom
 import { useRef } from 'react';
 import MapView from 'react-native-maps';
 import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
 import { ThemedIcons } from '@/components/ThemedIcons';
-import Button from '@/components/Button';
+import RoundedButton from '@/components/RoundedButton';
 import { LinearGradient } from 'expo-linear-gradient';
-import React, { useState, useEffect } from 'react';
+import React, { useState  } from 'react';
 import { StyleSheet, View, TouchableOpacity, ScrollView, Alert} from 'react-native';
 import { useLocation } from '@/hooks/useLocation';
 import { useThemeColor } from '@/hooks/useThemeColor';
@@ -17,6 +16,7 @@ import BackButton from '@/components/BackButton';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Polyline } from 'react-native-maps';
 import PointMarker from '@/components/maps/PointMarker';
+import Button from '@/components/Button';
 
 const MODES = [
   { label: 'Car', value: 'driving-car', icon: 'car'},
@@ -31,11 +31,11 @@ export default function CreateRouteScreen() {
     longitude?: string;
     locationName?: string;
   }>();
-  
   const [endLocation, setEndLocation] = useState<LocationItem | null>(null);
   const [waypoints, setWaypoints] = useState<LocationItem[]>([]);
   const [selectedMode, setSelectedMode] = useState<string | null>(null);
-  const [routeData, setRouteData] = useState<any>(null);
+  const [routesData, setRoutesData] = useState<any[]>([]);
+  const [selectedRouteIndex, setSelectedRouteIndex] = useState<number>(0);
   const [isGenerating, setIsGenerating] = useState(false);
   const [searchedLocations, setSearchedLocations] = useState<LocationItem[]>([]);
   const [routeCoordinates, setRouteCoordinates] = useState<{latitude: number, longitude: number}[]>([]);
@@ -67,6 +67,7 @@ export default function CreateRouteScreen() {
 //   }, [searchedLocations, isGenerating]);
 
   const secondaryColor = useThemeColor({}, 'secondary');
+  const primaryColor = useThemeColor({}, 'primary');
   const backgroundColor = useThemeColor({}, 'background');
   const { setActiveRoute } = useRoute();
   const { session } = useSession();
@@ -115,30 +116,31 @@ export default function CreateRouteScreen() {
     console.log('Starting polyline animation with', coordinates.length, 'coordinates');
     setAnimatedCoordinates([]);
     let index = 0;
-    const interval = setInterval(() => {
-      if (index < coordinates.length) {
-        const currentCoords = coordinates.slice(0, index + 1);
+    const totalDuration = 1000; // 2 seconds
+    const startTime = Date.now();
+    
+    const animationFrame = () => {
+      const elapsed = Date.now() - startTime;
+      const progress = Math.min(elapsed / totalDuration, 1);
+      const targetIndex = Math.floor(progress * coordinates.length);
+      
+      if (targetIndex > index) {
+        index = targetIndex;
+        const currentCoords = coordinates.slice(0, Math.min(index + 1, coordinates.length));
         setAnimatedCoordinates(currentCoords);
-        
-        // Follow the animation with camera
-        if (mapRef.current && currentCoords.length > 0) {
-          const currentPoint = currentCoords[currentCoords.length - 1];
-          mapRef.current.animateToRegion({
-            latitude: currentPoint.latitude,
-            longitude: currentPoint.longitude,
-            latitudeDelta: 0.01,
-            longitudeDelta: 0.01
-          }, 50); // Fast camera follow
-        }
-        
-        index++;
+      }
+      
+      if (progress < 1) {
+        requestAnimationFrame(animationFrame);
       } else {
+        // Animation complete
         console.log('Animation completed - returning to fit all locations');
-        clearInterval(interval);
-        // Return to fit all locations after animation completes
+        setAnimatedCoordinates(coordinates);
         setTimeout(() => fitMapToLocations(), 500);
       }
-    }, 5); // Very fast animation - 5ms intervals
+    };
+    
+    requestAnimationFrame(animationFrame);
   };
 
   // Handle end location selection
@@ -205,6 +207,44 @@ export default function CreateRouteScreen() {
     }
   };
 
+  const handlePreviousRoute = () => {
+    if (selectedRouteIndex > 0) {
+      const newIndex = selectedRouteIndex - 1;
+      setSelectedRouteIndex(newIndex);
+      console.log(`Showing route ${newIndex + 1} of ${routesData.length}`);
+      
+      // Update map polyline for new route instantly (no animation for route switching)
+      const newRoute = routesData[newIndex];
+      if (newRoute.geometry?.coordinates?.length > 0) {
+        const coordinates = newRoute.geometry.coordinates.map((coord: any) => ({
+          latitude: coord[1],
+          longitude: coord[0]
+        }));
+        setRouteCoordinates(coordinates);
+        setAnimatedCoordinates(coordinates);
+      }
+    }
+  };
+
+  const handleNextRoute = () => {
+    if (selectedRouteIndex < routesData.length - 1) {
+      const newIndex = selectedRouteIndex + 1;
+      setSelectedRouteIndex(newIndex);
+      console.log(`Showing route ${newIndex + 1} of ${routesData.length}`);
+      
+      // Update map polyline for new route instantly (no animation for route switching)
+      const newRoute = routesData[newIndex];
+      if (newRoute.geometry?.coordinates?.length > 0) {
+        const coordinates = newRoute.geometry.coordinates.map((coord: any) => ({
+          latitude: coord[1],
+          longitude: coord[0]
+        }));
+        setRouteCoordinates(coordinates);
+        setAnimatedCoordinates(coordinates);
+      }
+    }
+  };
+
   const handleGenerateRoute = async () => {
     if (!selectedMode || !endLocation || !latitude || !longitude) {
       console.log('Missing required data for route generation');
@@ -223,46 +263,31 @@ export default function CreateRouteScreen() {
         { latitude: endLocation.latitude!, longitude: endLocation.longitude! } // End location
       ];
 
-      const route = await getRoutes({
+      const routes = await getRoutes({
         location: locationArray,
         mode: selectedMode,
         accessToken: session?.accessToken || ''
       });
 
-      if (route) {
-        setRouteData(route);
-        console.log('Route generated:', route);
+      if (routes && routes.length > 0) {
+        setRoutesData(routes);
+        setSelectedRouteIndex(0);
+        console.log('Routes generated:', routes.length, 'alternatives');
         
-        // Extract coordinates for polyline from route geometry
-        if (route.geometry && route.geometry.coordinates && route.geometry.coordinates.length > 0) {
-          console.log('Route geometry found:', route.geometry);
-          const coordinates = route.geometry.coordinates.map((coord: any) => ({
+        // Extract coordinates for first route polyline
+        const firstRoute = routes[0];
+        if (firstRoute.geometry && firstRoute.geometry.coordinates && firstRoute.geometry.coordinates.length > 0) {
+          console.log('First route geometry found:', firstRoute.geometry);
+          const coordinates = firstRoute.geometry.coordinates.map((coord: any) => ({
             latitude: coord[1],
             longitude: coord[0]
           }));
           console.log('Extracted coordinates:', coordinates.length, 'points');
-          console.log('First few coordinates:', coordinates.slice(0, 3));
           setRouteCoordinates(coordinates);
-          
-          // Start animation without refitting map
           animatePolyline(coordinates);
-        } else {
-          console.log('No geometry coordinates found, trying to extract from segments/steps');
-          // Fallback: create simple line between waypoints
-          const fallbackCoordinates = [
-            { latitude: latitude as number, longitude: longitude as number },
-            ...waypoints.filter(wp => wp.latitude && wp.longitude).map(wp => ({
-              latitude: wp.latitude!,
-              longitude: wp.longitude!
-            })),
-            { latitude: endLocation.latitude!, longitude: endLocation.longitude! }
-          ];
-          console.log('Using fallback coordinates:', fallbackCoordinates.length, 'points');
-          setRouteCoordinates(fallbackCoordinates);
-          animatePolyline(fallbackCoordinates);
         }
       } else {
-        console.log('Failed to generate route');
+        console.log('Failed to generate routes');
       }
     } catch (error) {
       console.error('Error generating route:', error);
@@ -289,53 +314,52 @@ export default function CreateRouteScreen() {
   };
 
   const handleStartRoute = async () => {
-    if (!routeData || !selectedMode || !endLocation || !latitude || !longitude) {
+    if (!routesData || routesData.length === 0 || !selectedMode || !endLocation || !latitude || !longitude) {
       console.log('Missing required data for starting route');
       return;
     }
 
     try {
+      // Get the selected route
+      const selectedRoute = routesData[selectedRouteIndex];
+      
       // Build location array with names for ActiveRoute
       const locationArray = [
         { 
           latitude: latitude as number, 
           longitude: longitude as number, 
           locationName: `${suburb}, ${city}` 
-        }, // Starting location
+        },
         ...waypoints.filter(wp => wp.latitude && wp.longitude).map(wp => ({
           latitude: wp.latitude!,
           longitude: wp.longitude!,
           locationName: wp.locationName
-        })), // Waypoints
+        })),
         { 
           latitude: endLocation.latitude!, 
           longitude: endLocation.longitude!,
           locationName: endLocation.locationName 
-        } // End location
+        }
       ];
 
       const activeRoute = {
-        routeID: `route_${Date.now()}`, // Generate unique ID
+        routeID: `route_${Date.now()}`,
         type: 'generated' as const,
         location: locationArray,
         mode: selectedMode,
         status: 'active',
         createdOn: new Date(),
-        routeData: routeData
+        routeData: selectedRoute
       };
 
-      // Save to RouteContext
       await setActiveRoute(activeRoute);
       console.log('Route saved to RouteContext:', activeRoute);
 
-      // Use a more reliable navigation approach
       try {
-        // Small delay to ensure state is updated
         await new Promise(resolve => setTimeout(resolve, 50));
         router.replace('/(tabs)/maps');
       } catch (navError) {
         console.error('Navigation error:', navError);
-        // Fallback navigation
         router.push('/(tabs)/maps');
       }
     } catch (error) {
@@ -403,105 +427,133 @@ export default function CreateRouteScreen() {
       </MapView>
 
       <LinearGradient
-        colors={['rgba(0,0,0)', 'rgba(0,0,0,0.6)', 'transparent']}
+        colors={[backgroundColor, 'transparent']}
         style={styles.header}
       >
-        {routeData? (
-          <View style={styles.routeDataContainer}>
-            <ThemedText type="title" style={{color: '#ccc'}}>
-              {(routeData.distance / 1000).toFixed(2)} km • {Math.round(routeData.duration / 60)} min
+        {routesData.length > 0? (
+          <>
+            <ThemedText type="title">
+              {(routesData[selectedRouteIndex].distance / 1000).toFixed(2)} km • {Math.round(routesData[selectedRouteIndex].duration / 60)} min
             </ThemedText>
-            <ThemedText style={{color: '#ccc', flexWrap: 'wrap'}}>
-              {suburb}, {city}{waypoints.length > 0 && waypoints.map(wp => wp.locationName ? ` → ${wp.locationName}` : '').join('')} → {endLocation?.locationName}
+            <ThemedText style={{flexWrap: 'wrap'}}>
+              Your Location {waypoints.length > 0 && waypoints.map(wp => wp.locationName ? ` → ${wp.locationName}` : '').join('')} → {endLocation?.locationName}
             </ThemedText>
-          </View>
-        ):(!skipForm && (<>
-          <View style={{flexDirection: 'row', alignItems: 'center', gap: 7, marginBottom: 10}}>
-            <BackButton type='default' color='#ccc'/>
-            <ThemedText style={{color: '#ccc'}}>Your Location to</ThemedText>
-          </View>
-          
-          <TouchableOpacity style={styles.addWaypointButton} onPress={handleAddWaypoint}>
-            <ThemedText style={{color: '#ccc'}}>Add Stop</ThemedText>
-          </TouchableOpacity>
+          </>
+        ) : (!skipForm && (
+          <>
+            <View style={{flexDirection: 'row', alignItems: 'center', gap: 7, marginBottom: 10}}>
+              <BackButton type='default'/>
+              <ThemedText>Your Location to</ThemedText>
+            </View>
+            
+            <TouchableOpacity style={[styles.addWaypointButton, {backgroundColor: primaryColor}]} onPress={handleAddWaypoint}>
+              <ThemedText>Add Stop</ThemedText>
+            </TouchableOpacity>
 
-          {waypoints.map((waypoint, index) => (
-          <View key={`waypoint-${index}`}>
-          <TouchableOpacity 
-            onPress={() => handleRemoveWaypoint(index)}
-            style={styles.removeButton}
-          >
-            <ThemedIcons name="close" size={25} color="#ff4444" />
-          </TouchableOpacity>
-          <LocationAutocomplete
-            value={waypoint.locationName}
-            onSelect={(location) => handleWaypointSelect(index, location)}
-            placeholder={`Enter waypoint ${index + 1}`}
-            style={{ zIndex: 100 - index, backgroundColor: 'rgba(0,0,0,.5)' }}
-          />
-        </View>))}
-        <View key="end">
-          <LocationAutocomplete
-            value={endLocation?.locationName || ''}
-            onSelect={handleEndLocationSelect}
-            placeholder="Enter destination"
-            style={{ zIndex: 100 - waypoints.length, backgroundColor: 'rgba(0,0,0,.5)' }}
-          />
-        </View>
-        <ScrollView 
-          horizontal 
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.modeRowContent}
-        >
-          {MODES.map((mode) => (
-            <TouchableOpacity
-              key={mode.value}
-              onPress={() => handleModeToggle(mode.value, true)}
+            {waypoints.map((waypoint, index) => (
+            <View key={`waypoint-${index}`}>
+            <TouchableOpacity 
+              onPress={() => handleRemoveWaypoint(index)}
+              style={styles.removeButton}
             >
-              <ThemedView
-              style={[
-                styles.modeButton,
-                selectedMode === mode.value && {backgroundColor: secondaryColor},
-              ]}>
+              <ThemedIcons name="close" size={25} color="#ff4444" />
+            </TouchableOpacity>
+            <LocationAutocomplete
+              value={waypoint.locationName}
+              onSelect={(location) => handleWaypointSelect(index, location)}
+              placeholder={`Enter waypoint ${index + 1}`}
+              style={{ zIndex: 100 - index}}
+            />
+          </View>))}
+          <View key="end">
+            <LocationAutocomplete
+              value={endLocation?.locationName || ''}
+              onSelect={handleEndLocationSelect}
+              placeholder="Enter destination"
+              style={{ zIndex: 100 - waypoints.length}}
+            />
+          </View>
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.modeRowContent}
+          >
+            {MODES.map((mode) => (
+              <TouchableOpacity
+                key={mode.value}
+                onPress={() => handleModeToggle(mode.value, true)}
+                style={[
+                  styles.modeButton,
+                  selectedMode === mode.value ? {backgroundColor: secondaryColor} : {backgroundColor: primaryColor}
+                ]}
+              >
                 <ThemedIcons name={mode.icon} size={15} color="#ccc"/>
-                <ThemedText style={{color: '#ccc'}}>
+                <ThemedText style={
+                  selectedMode === mode.value && {color: '#fff'}
+                }>
                   {mode.label}
                 </ThemedText>
-              </ThemedView>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-        </>))}
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+          </>
+        ))}
       </LinearGradient>
 
-      <LinearGradient
-        colors={['transparent', 'rgba(0,0,0,.5)']}
-        style={styles.buttonsContainer}
-      >
-        {routeData ? (<>
-          <TouchableOpacity style={styles.sideButton} onPress={() => setRouteData(null)}>
-            <ThemedIcons name="arrow-left" size={20} color="#fff" />
-          </TouchableOpacity>
+      
+        {routesData.length > 0? (
+          <>
+            {routesData.length > 1 && (
+              <View style={styles.buttonsContainer}>
+                <TouchableOpacity style={styles.sideButton} onPress={handlePreviousRoute}>
+                  <ThemedIcons name="chevron-left" size={20} color="#fff" />
+                </TouchableOpacity>
 
-          <TouchableOpacity style={styles.startButton} onPress={handleStartRoute}>
-            <ThemedIcons name="play" size={32} color="#fff" />
-          </TouchableOpacity>
+                <View style={styles.routeInfo}>
+                  <ThemedText>Route {selectedRouteIndex + 1} of {routesData.length}</ThemedText>
+                </View>
 
-          <TouchableOpacity style={styles.sideButton} onPress={handleCancelRoute}>
-            <ThemedIcons name="close" size={20} color="#fff" />
-          </TouchableOpacity>
-        </>
-      ):(
-        <View style={styles.generateButtonContainer}>
-          <Button
-            title={isGenerating ? "Generating..." : "Generate Route"}
+                <TouchableOpacity style={styles.sideButton} onPress={handleNextRoute}>
+                  <ThemedIcons name="chevron-right" size={20} color="#fff" />
+                </TouchableOpacity>
+              </View>
+            )}
+
+            <View style={styles.buttonsContainer}>
+              <TouchableOpacity style={[styles.startButton]} onPress={handleStartRoute}>
+                <ThemedIcons name="play" size={32} color="#fff" />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.otherButtonsContainer}>
+              <Button
+                title="Go Back"
+                onPress={() => {
+                  setRoutesData([]);
+                  setSearchedLocations([]);
+                  setEndLocation(null);
+                  setWaypoints([]);
+                  setAnimatedCoordinates([]);
+                  setRouteCoordinates([]);
+                }}
+                buttonStyle={{flex: 1}}
+              />
+              <Button
+                title="Cancel Route"
+                onPress={handleCancelRoute}
+                buttonStyle={{flex: 1}}
+              />
+            </View>
+          </>
+        ) : (
+          <RoundedButton
+            iconName="arrow-right"
             onPress={handleGenerateRoute}
-            type="primary"
+            style={styles.generateButton}
             disabled={isGenerating || !selectedMode || !endLocation}
+            loading={isGenerating}
           />
-        </View>
-      )}
-      </LinearGradient>
+        )}
     </View>
   );
 }
@@ -515,11 +567,7 @@ const styles = StyleSheet.create({
     zIndex: 100,
     pointerEvents: 'box-none',
     padding: 16,
-    paddingBottom: 60,
-  },
-  routeDataContainer: {
-    marginTop: 20,
-    gap: 5,
+    paddingBottom: 100,
   },
   addWaypointButton: {
     paddingVertical: 5,
@@ -528,12 +576,12 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    borderColor: '#ccc',
-    borderWidth: 1,
     position: 'absolute',
     right: 7,
     top: 16,
     zIndex: 20,
+    borderWidth: 1,
+    borderColor: '#ccc4',
   },
   removeButton: {
     position: 'absolute',
@@ -552,12 +600,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
-    backgroundColor: 'rgba(0,0,0,.7)',
     gap: 7,
   },
   buttonsContainer: {
     position: 'absolute',
-    bottom: 0,
+    bottom: 75,
     left: 0,
     right: 0,
     zIndex: 20,
@@ -565,7 +612,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     flexDirection: 'row',
     gap: 15,
-    paddingBottom: 40,
   },
   startButton:{
     backgroundColor: '#4CAF50',
@@ -581,9 +627,27 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  generateButtonContainer: {
-    flex: 1,
-    marginHorizontal: 16,
-    marginBottom: -20,
+  routeInfo: {
+    backgroundColor: 'rgba(0,0,0,.5)',
+    paddingVertical: 8,
+    paddingHorizontal: 15,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
+  generateButton: {
+    position: 'absolute',
+    bottom: 16,
+    right: 16,
+    zIndex: 20,
+  },
+  otherButtonsContainer: {
+    position: 'absolute',
+    bottom:16,
+    left: 16,
+    right: 16,
+    zIndex: 15,
+    flexDirection: 'row',
+    gap: 7,
+  }
 });
