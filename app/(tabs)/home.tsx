@@ -196,10 +196,10 @@ export default function HomeScreen() {
               <ThemedText style={styles.menuOptionText}>Safety</ThemedText>
             </TouchableOpacity>
 
-            <TouchableOpacity style={[styles.menuOptions, !isConnected && {opacity:.5},{backgroundColor: secondaryColor}]} onPress={() => []}
+            <TouchableOpacity style={[styles.menuOptions, !isConnected && {opacity:.5},{backgroundColor: secondaryColor}]} onPress={() => router.push('/translate/translate')}
               disabled={!isConnected}>
-              <ThemedIcons name="robot" size={25} color='#fff'/>
-              <ThemedText style={styles.menuOptionText}>TaraAI</ThemedText>
+              <ThemedIcons name="translate-variant" size={25} color='#fff'/>
+              <ThemedText style={styles.menuOptionText}>Translate</ThemedText>
             </TouchableOpacity>
           </View>
 
@@ -268,11 +268,11 @@ export default function HomeScreen() {
             </View>
           </View>
 
-          {!user?.isProUser && isConnected && 
+          {/* {!user?.isProUser && isConnected && 
             <ThemedView style={styles.adContainer} color='primary' shadow>
               <Banner />
             </ThemedView>
-          }
+          } */}
              
             
         </View>

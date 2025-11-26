@@ -74,6 +74,7 @@ function AppContent() {
           <Stack.Screen name="itineraries/itineraries" />
           <Stack.Screen name="itineraries/itineraries-create" />
           <Stack.Screen name="safety/safety" />
+          <Stack.Screen name="translate/translate" />
           <Stack.Screen name="+not-found" />
         </Stack>
       </SafeAreaView>
