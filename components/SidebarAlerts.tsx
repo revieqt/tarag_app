@@ -172,7 +172,6 @@ const SidebarAlerts: React.FC = () => {
     ]}
     pointerEvents={hideAlert ? 'none' : 'auto'}
     >
-    {/* PUT THE COTHER BUTTONS HERE */}
     
     {/* Alert Button - Only show if there are alerts */}
     {/* {allAlerts.length > 0 && (
@@ -192,26 +191,15 @@ const SidebarAlerts: React.FC = () => {
         </ThemedView>
         </Animated.View>
     )} */}
-    {activeRoute && 
-        <Animated.View
-        style={{
-            transform: [{ translateY: contentSlide }],
-        }}
-        >
-            <ActiveRouteSidebarButton />
-        </Animated.View>
-    }
-
-    {session?.user?.safetyState?.isInAnEmergency &&
-    <Animated.View
-        style={{
-            transform: [{ translateY: contentSlide }],
-        }}
-        >
-            <SOSSidebarButton />
-        </Animated.View>
-    }
     
+    <Animated.View
+    style={{
+        transform: [{ translateY: contentSlide }],
+    }}
+    >
+        {activeRoute && <ActiveRouteSidebarButton />}
+        {session?.user?.safetyState?.isInAnEmergency &&<SOSSidebarButton />}
+    </Animated.View>
 
     <Animated.View
         style={{
