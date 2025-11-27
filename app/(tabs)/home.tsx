@@ -12,6 +12,7 @@ import Wave from '@/components/Wave';
 import HomeMap from '@/components/maps/HomeMap';
 import Banner from '@/components/ads/BannerAd';
 import { useInternetConnection } from '@/utils/checkInternetConnection';
+import SidebarAlerts from '@/components/SidebarAlerts';
 
 export default function HomeScreen() {
   const { session } = useSession();
@@ -178,105 +179,102 @@ export default function HomeScreen() {
             pointerEvents="none"
           />
         </View>
-        
-        <View style={{paddingHorizontal: 16, zIndex: 1000, paddingBottom: 150, backgroundColor}}>
-          <View style={styles.menu}>
-            <TouchableOpacity style={[styles.menuOptions, {backgroundColor: secondaryColor}]} onPress={() => router.push('/routes/routes')}>
-              <ThemedIcons name="map-marker-radius" size={25} color='#fff'/>
-              <ThemedText style={styles.menuOptionText}>Routes</ThemedText>
-            </TouchableOpacity>
 
-            <TouchableOpacity style={[styles.menuOptions, {backgroundColor: secondaryColor}]} onPress={() => router.push('/itineraries/itineraries')}>
-              <ThemedIcons name="calendar" size={25} color='#fff'/>
-              <ThemedText style={styles.menuOptionText}>Itineraries</ThemedText>
-            </TouchableOpacity>
+        <View style={styles.menu}>
+          <TouchableOpacity style={[styles.menuOptions, {backgroundColor: secondaryColor}]} onPress={() => router.push('/routes/routes')}>
+            <ThemedIcons name="map-marker-radius" size={25} color='#fff'/>
+            <ThemedText style={styles.menuOptionText}>Routes</ThemedText>
+          </TouchableOpacity>
 
-            <TouchableOpacity style={[styles.menuOptions, {backgroundColor: secondaryColor}]} onPress={() => router.push('/safety/safety')}>
-              <ThemedIcons name="shield-plus" size={25} color='#fff'/>
-              <ThemedText style={styles.menuOptionText}>Safety</ThemedText>
-            </TouchableOpacity>
+          <TouchableOpacity style={[styles.menuOptions, {backgroundColor: secondaryColor}]} onPress={() => router.push('/itineraries/itineraries')}>
+            <ThemedIcons name="calendar" size={25} color='#fff'/>
+            <ThemedText style={styles.menuOptionText}>Itineraries</ThemedText>
+          </TouchableOpacity>
 
-            <TouchableOpacity style={[styles.menuOptions, !isConnected && {opacity:.5},{backgroundColor: secondaryColor}]} onPress={() => router.push('/translate/translate')}
-              disabled={!isConnected}>
-              <ThemedIcons name="translate-variant" size={25} color='#fff'/>
-              <ThemedText style={styles.menuOptionText}>Translate</ThemedText>
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity style={[styles.menuOptions, {backgroundColor: secondaryColor}]} onPress={() => router.push('/safety/safety')}>
+            <ThemedIcons name="shield-plus" size={25} color='#fff'/>
+            <ThemedText style={styles.menuOptionText}>Safety</ThemedText>
+          </TouchableOpacity>
 
-          <View style={styles.gridContainer}>
+          <TouchableOpacity style={[styles.menuOptions, !isConnected && {opacity:.5},{backgroundColor: secondaryColor}]} onPress={() => router.push('/translate/translate')}
+            disabled={!isConnected}>
+            <ThemedIcons name="translate-variant" size={25} color='#fff'/>
+            <ThemedText style={styles.menuOptionText}>Translate</ThemedText>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.gridContainer}>
+          <TouchableOpacity 
+            onPress={() => router.push({
+              pathname: '/(tabs)/explore',
+              params: { tab: '2' }
+            })}
+            activeOpacity={0.8}
+          >
+            <ThemedView color='primary' shadow style={[styles.gridChildContainer, styles.leftGridContainer]}>
+              <ThemedText style={{opacity: .5, fontSize: 10}}>Meet new friends with</ThemedText>
+              <ThemedText style={{opacity: .85}}>TaraBuddy</ThemedText>
+              <LinearGradient
+                colors={['rgba(0, 255, 222,.4)', 'transparent']}
+                start={{ x: 1, y: 0 }}
+                end={{ x: 0, y: 0 }}
+                style={styles.gridCircle}
+                pointerEvents="none"
+              />
+              <Image source={require('@/assets/images/slide3-img.png')} style={styles.taraBuddyImage} />
+            </ThemedView>
+          </TouchableOpacity>
+          <View style={[styles.gridChildContainer, {gap: '4%'}]}>
+            <ThemedView color='primary' shadow style={styles.rightGridContainer}>
+              <TouchableOpacity 
+              onPress={() => router.push({
+                pathname: '/(tabs)/explore',
+                params: { tab: '1' }
+              })}
+              activeOpacity={0.8} style={{flex:1, padding: 12}}
+              >
+                <ThemedText style={{opacity: .5, fontSize: 10}}>Seamless group</ThemedText>
+                <ThemedText style={{opacity: .85}}>Rooms</ThemedText>
+                <LinearGradient
+                  colors={['rgba(0, 255, 222,.45)', 'transparent']}
+                  start={{ x: 1, y: 0 }}
+                  end={{ x: 0, y: 0 }}
+                  style={styles.rightGridCircle}
+                  pointerEvents="none"
+                />
+                <Image source={require('@/assets/images/slide4-img.png')} style={styles.rightGridImage} />
+              </TouchableOpacity>
+            </ThemedView>
+            <ThemedView color='primary' shadow style={styles.rightGridContainer}>
             <TouchableOpacity 
               onPress={() => router.push({
                 pathname: '/(tabs)/explore',
-                params: { tab: '2' }
+                params: { tab: '0' }
               })}
-              activeOpacity={0.8}
+              activeOpacity={0.8} style={{flex: 1, padding: 12}}
             >
-              <ThemedView color='primary' shadow style={[styles.gridChildContainer, styles.leftGridContainer]}>
-                <ThemedText style={{opacity: .5, fontSize: 10}}>Meet new friends with</ThemedText>
-                <ThemedText style={{opacity: .85}}>TaraBuddy</ThemedText>
+                <ThemedText style={{opacity: .5, fontSize: 10}}>Socialize on</ThemedText>
+                <ThemedText style={{opacity: .85}}>Events</ThemedText>
                 <LinearGradient
-                  colors={['rgba(0, 255, 222,.4)', 'transparent']}
+                  colors={['rgba(0, 255, 222,.45)', 'transparent']}
                   start={{ x: 1, y: 0 }}
                   end={{ x: 0, y: 0 }}
-                  style={styles.gridCircle}
+                  style={styles.rightGridCircle}
                   pointerEvents="none"
                 />
-                <Image source={require('@/assets/images/slide3-img.png')} style={styles.taraBuddyImage} />
-              </ThemedView>
-            </TouchableOpacity>
-            <View style={[styles.gridChildContainer, {gap: '4%'}]}>
-              <ThemedView color='primary' shadow style={styles.rightGridContainer}>
-                <TouchableOpacity 
-                onPress={() => router.push({
-                  pathname: '/(tabs)/explore',
-                  params: { tab: '1' }
-                })}
-                activeOpacity={0.8} style={{flex:1, padding: 12}}
-                >
-                  <ThemedText style={{opacity: .5, fontSize: 10}}>Seamless group</ThemedText>
-                  <ThemedText style={{opacity: .85}}>Rooms</ThemedText>
-                  <LinearGradient
-                    colors={['rgba(0, 255, 222,.45)', 'transparent']}
-                    start={{ x: 1, y: 0 }}
-                    end={{ x: 0, y: 0 }}
-                    style={styles.rightGridCircle}
-                    pointerEvents="none"
-                  />
-                  <Image source={require('@/assets/images/slide4-img.png')} style={styles.rightGridImage} />
-                </TouchableOpacity>
-              </ThemedView>
-              <ThemedView color='primary' shadow style={styles.rightGridContainer}>
-              <TouchableOpacity 
-                onPress={() => router.push({
-                  pathname: '/(tabs)/explore',
-                  params: { tab: '0' }
-                })}
-                activeOpacity={0.8} style={{flex: 1, padding: 12}}
-              >
-                  <ThemedText style={{opacity: .5, fontSize: 10}}>Socialize on</ThemedText>
-                  <ThemedText style={{opacity: .85}}>Events</ThemedText>
-                  <LinearGradient
-                    colors={['rgba(0, 255, 222,.45)', 'transparent']}
-                    start={{ x: 1, y: 0 }}
-                    end={{ x: 0, y: 0 }}
-                    style={styles.rightGridCircle}
-                    pointerEvents="none"
-                  />
-                  <Image source={require('@/assets/images/slide2-img.png')} style={styles.rightGridImage} />
-                </TouchableOpacity>
-              </ThemedView>
-            </View>
-          </View>
-
-          {/* {!user?.isProUser && isConnected && 
-            <ThemedView style={styles.adContainer} color='primary' shadow>
-              <Banner />
+                <Image source={require('@/assets/images/slide2-img.png')} style={styles.rightGridImage} />
+              </TouchableOpacity>
             </ThemedView>
-          } */}
-             
-            
+          </View>
         </View>
+
+        {/* {!user?.isProUser && isConnected && 
+          <View style={styles.adContainer}>
+            <Banner />
+          </View>
+        } */}
       </ScrollView>
+      <SidebarAlerts />
     </ThemedView>
   );
 }
@@ -362,7 +360,8 @@ const styles = StyleSheet.create({
     width: '100%',
     justifyContent: 'space-between',
     marginBottom: 10,
-    zIndex: 2000
+    zIndex: 2000,
+    paddingHorizontal: 16,
   },
   menuOptions:{
     width: Dimensions.get('window').width * 0.215,
@@ -384,6 +383,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 16,
+    paddingHorizontal: 16,
   },
   gridChildContainer:{
     width: Dimensions.get('window').width * 0.445,

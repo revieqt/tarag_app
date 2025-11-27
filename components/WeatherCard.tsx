@@ -4,7 +4,7 @@
 // import { ThemedView } from '@/components/ThemedView';
 // import { ThemedIcons } from '@/components/ThemedIcons';
 // import { useLocation } from '@/hooks/useLocation';
-// import { useWeather, useOtherLocationWeather } from '@/context/WeatherContext';
+// // import { useWeather, useOtherLocationWeather } from '@/context/WeatherContext';
 // import LoadingContainerAnimation from './LoadingContainerAnimation';
 // import { useThemeColor } from '@/hooks/useThemeColor';
 
@@ -29,10 +29,7 @@
 //     currentLocation.city
 //   ));
   
-//   // Use current location weather if no props passed
 //   const currentWeather = useWeather();
-  
-//   // Use other location weather if props passed
 //   const otherLocationWeather = useOtherLocationWeather();
   
 //   // Determine which weather data to use
