@@ -1,40 +1,90 @@
 import { useThemeColor } from '@/hooks/useThemeColor';
-import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
+import Svg, { Defs, RadialGradient, Stop, Circle } from 'react-native-svg';
 
 type GradientBlobsProps = {
   color?: string;
 };
 
-const GradientBlobs: React.FC<GradientBlobsProps> = ({
-  color,
-}) => {
+const GradientBlobs: React.FC<GradientBlobsProps> = ({ color }) => {
   const secondaryColor = useThemeColor({}, 'accent');
   const gradientColor = color || secondaryColor;
 
   return (
     <View style={styles.container}>
-      <LinearGradient
-        colors={['transparent',gradientColor ]}
-        start={{ x: 0, y: 0.5 }}   // left side
-        end={{ x: 1, y: 0.5 }}     // right side
-        style={styles.topRightBlob}
-      />
-      <LinearGradient
-        colors={['transparent',gradientColor ]}
-        start={{ x: 0.5, y: 0 }}
-        end={{ x: 0.5, y: 1 }}
-        style={styles.bottomLeftBlob}
-      />
-      <LinearGradient
-        colors={[gradientColor,'transparent' ]}
-        start={{ x: 0, y: 0.5 }}   // left side
-        end={{ x: 1, y: 0.5 }} 
-        style={styles.bottomCenterBlob}
-      />
+      <Svg width="100%" height="100%">
+
+        <Defs>
+          {/* Top Right Gradient */}
+          <RadialGradient
+            id="gradTopRight"
+            cx="50%"
+            cy="50%"
+            r="50%"
+            gradientUnits="objectBoundingBox"
+          >
+            <Stop offset="0%" stopColor={gradientColor} stopOpacity="0.55" />
+            <Stop offset="70%" stopColor={gradientColor} stopOpacity="0.22" />
+            <Stop offset="100%" stopColor={gradientColor} stopOpacity="0" />
+          </RadialGradient>
+
+          {/* Bottom Left Gradient */}
+          <RadialGradient
+            id="gradBottomLeft"
+            cx="50%"
+            cy="50%"
+            r="50%"
+            gradientUnits="objectBoundingBox"
+          >
+            <Stop offset="0%" stopColor={gradientColor} stopOpacity="0.6" />
+            <Stop offset="70%" stopColor={gradientColor} stopOpacity="0.25" />
+            <Stop offset="100%" stopColor={gradientColor} stopOpacity="0" />
+          </RadialGradient>
+
+          {/* Bottom Center Gradient */}
+          <RadialGradient
+            id="gradBottomCenter"
+            cx="50%"
+            cy="50%"
+            r="50%"
+            gradientUnits="objectBoundingBox"
+          >
+            <Stop offset="0%" stopColor={gradientColor} stopOpacity="0.4" />
+            <Stop offset="80%" stopColor={gradientColor} stopOpacity="0.15" />
+            <Stop offset="100%" stopColor={gradientColor} stopOpacity="0" />
+          </RadialGradient>
+        </Defs>
+
+        {/* TOP RIGHT BLOB */}
+        <Circle
+          cx="85%"     // same placement
+          cy="-5%"
+          r="35%"
+          fill="url(#gradTopRight)"
+          opacity={.5}
+        />
+
+        {/* BOTTOM LEFT BLOB */}
+        <Circle
+          cx="-10%"
+          cy="85%"
+          r="45%"
+          fill="url(#gradBottomLeft)"
+          opacity={.5}
+        />
+
+        {/* BOTTOM CENTER BLOB */}
+        <Circle
+          cx="60%"
+          cy="95%"
+          r="25%"
+          fill="url(#gradBottomCenter)"
+          opacity={.3}
+        />
+
+      </Svg>
     </View>
-    
   );
 };
 
@@ -45,33 +95,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-  },
-  topRightBlob: {
-    width: '60%',
-    aspectRatio: 1,
-    opacity: 0.4,
-    position: 'absolute',
-    top: '-13%',
-    right: '-13%',
-    borderRadius: 10000,
-  },
-  bottomLeftBlob: {
-    width: '70%',
-    aspectRatio: 1,
-    opacity: 0.5,
-    position: 'absolute',
-    bottom: '-10%',
-    left: '-15%',
-    borderRadius: 10000,
-  },
-  bottomCenterBlob: {
-    width: '40%',
-    aspectRatio: 1,
-    opacity: 0.2,
-    position: 'absolute',
-    bottom: '-10%',
-    left: '40%',
-    borderRadius: 10000,
   },
 });
 

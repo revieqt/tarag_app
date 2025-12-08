@@ -118,6 +118,12 @@ export default function RouteMap({
     longitude: lon,
   })) || [];
 
+  // Get breadcrumb trail for visualization
+  const breadcrumbCoordinates = activeRoute?.breadcrumbs?.map(point => ({
+    latitude: point.latitude,
+    longitude: point.longitude,
+  })) || [];
+
   // Get route locations for markers
   const routeLocations = activeRoute?.location || [];
 
@@ -166,7 +172,19 @@ export default function RouteMap({
             lineCap="round"
             lineJoin="round"
           />
+        )}
 
+        {/* Breadcrumb Trail - User's actual path */}
+        {breadcrumbCoordinates.length > 1 && (
+          <Polyline
+            coordinates={breadcrumbCoordinates}
+            strokeColor="#FFC107"
+            strokeWidth={3}
+            lineCap="round"
+            lineJoin="round"
+            lineDashphase={5}
+            geodesic={true}
+          />
         )}
 
         {/* Route Markers */}

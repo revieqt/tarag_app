@@ -18,7 +18,7 @@ import OptionsPopup from '@/components/OptionsPopup';
 import EndRouteModal from '@/components/modals/EndRouteModal';
 
 export default function ActiveRouteMap() {
-  const { activeRoute, setActiveRoute, elapsedTime, distanceTravelled } = useRoute();
+  const { activeRoute, setActiveRoute, elapsedTime, distanceTravelled, addBreadcrumb } = useRoute();
   const router = useRouter();
   const { latitude, longitude } = useLocation();
   const { mapType, setMapType } = useMapType();
@@ -35,6 +35,7 @@ export default function ActiveRouteMap() {
   const [currentNearbyStop, setCurrentNearbyStop] = useState<string>('');
   const [firstStepInstruction, setFirstStepInstruction] = useState<string>('');
   const [nextStopLocation, setNextStopLocation] = useState<string>('');
+  const [lastBreadcrumbLocation, setLastBreadcrumbLocation] = useState<{ lat: number; lon: number } | null>(null);
   
   // Animation refs for smooth user marker movement
   const animatedLatitude = useRef(new Animated.Value(latitude || 0));
@@ -152,6 +153,34 @@ export default function ActiveRouteMap() {
       ]).start();
     }
   }, [latitude, longitude]);
+
+  // 🥾 Breadcrumb Trail Tracking - Record user's actual path
+  useEffect(() => {
+    if (!activeRoute || !latitude || !longitude) return;
+
+    // Only add breadcrumb if user has moved more than 5 meters from last point
+    if (lastBreadcrumbLocation) {
+      const distance = haversineDistance(
+        lastBreadcrumbLocation.lat,
+        lastBreadcrumbLocation.lon,
+        latitude,
+        longitude
+      );
+
+      if (distance < 5) return; // Skip if too close to last breadcrumb
+    }
+
+    // Add breadcrumb point with timestamp
+    const breadcrumb = {
+      latitude,
+      longitude,
+      timestamp: Date.now(),
+      accuracy: 5, // Default accuracy, could come from location service
+    };
+
+    addBreadcrumb(breadcrumb);
+    setLastBreadcrumbLocation({ lat: latitude, lon: longitude });
+  }, [latitude, longitude, activeRoute?.routeID]);
 
   // Device orientation listener for both normal and 3D view
   useEffect(() => {
@@ -552,8 +581,7 @@ export default function ActiveRouteMap() {
           Next Stop: {nextStop || nextStopLocation || 'Destination'}
         </ThemedText>
         </LinearGradient>
-        <LinearGradient
-          colors={['transparent','transparent', primaryColor]}
+        <View
           style={styles.buttonContainer}
         >
           {route3dEnabled&&(
@@ -662,7 +690,7 @@ export default function ActiveRouteMap() {
             color="white" 
           />
         </TouchableOpacity>
-      </LinearGradient>
+      </View>
     </View>
   )
 

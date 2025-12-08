@@ -7,6 +7,7 @@ import { ThemeProvider } from '@/context/ThemeContext';
 import { SessionProvider } from '@/context/SessionContext';
 import { View } from 'react-native';
 import { RouteProvider } from '@/context/RouteContext';
+import { AlertsProvider } from '@/context/AlertsContext';
 import mobileAds from 'react-native-google-mobile-ads';
 import * as SplashScreen from 'expo-splash-screen';
 
@@ -42,7 +43,9 @@ export default function RootLayout() {
     <ThemeProvider>
       <SessionProvider>
         <RouteProvider>
-          <AppContent />
+          <AlertsProvider>
+            <AppContent />
+          </AlertsProvider>
         </RouteProvider>
       </SessionProvider>
     </ThemeProvider>

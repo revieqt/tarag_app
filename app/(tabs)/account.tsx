@@ -7,7 +7,7 @@ import { ThemedView } from '@/components/ThemedView';
 import WebViewModal from '@/components/modals/WebViewModal';
 import { SUPPORT_FORM_URL} from '@/constants/Config';
 import { useSession } from '@/context/SessionContext';
-// import { useAlerts } from '@/context/AlertsContext';
+import { useAlerts } from '@/context/AlertsContext';
 import { useLocation } from '@/hooks/useLocation';
 import { openDocument } from '@/utils/documentUtils';
 import { router } from 'expo-router';
@@ -25,15 +25,14 @@ import ProfileImage from '@/components/ProfileImage';
 
 export default function AccountScreen() {
   const { session, clearSession } = useSession();
+  const { fetchGlobalAlerts, loading: alertsLoading } = useAlerts();
   const user = session?.user;
   const primaryColor = useThemeColor({}, 'primary');
-  // const { refreshGlobalAlerts, loading: alertsLoading } = useAlerts();
   const location = useLocation();
   const [showPayment, setShowPayment] = useState(false);
   const [paymentUrl, setPaymentUrl] = useState<string | null>(null);
   const [showSupport, setShowSupport] = useState(false);
   const [devMode, setDevMode] = useState(false);
-  const [isFetchingAlerts, setIsFetchingAlerts] = useState(false);
   const isConnected = useInternetConnection();
 
   const fullName = [user?.fname, user?.lname].filter(Boolean).join(' ');
@@ -47,26 +46,15 @@ export default function AccountScreen() {
     }
   };
 
-  // const handleManualFetchAlerts = async () => {
-  //   if (!location.latitude || !location.longitude) {
-  //     Alert.alert('Location Required', 'Location data is required to fetch alerts. Please ensure location services are enabled.');
-  //     return;
-  //   }
+  const handleManualFetchAlerts = async () => {
+    try {
+      await fetchGlobalAlerts();
+      Alert.alert('Success', 'Global alerts fetched successfully!');
+    } catch (error) {
+      Alert.alert('Error', 'Failed to fetch global alerts. Please try again.');
+    }
+  };
 
-  //   // Show fetching alert
-  //   Alert.alert('Fetching Alerts', 'Please wait while we fetch the latest global alerts...');
-    
-  //   setIsFetchingAlerts(true);
-  //   try {
-  //     await refreshGlobalAlerts({ force: true });
-  //     Alert.alert('Success', 'Global alerts have been manually fetched and updated.');
-  //   } catch (error) {
-  //     console.error('Manual fetch error:', error);
-  //     Alert.alert('Fetch Failed', 'Failed to fetch global alerts. Please try again.');
-  //   } finally {
-  //     setIsFetchingAlerts(false);
-  //   }
-  // };
 
   const handleClearCache = async () => {
     Alert.alert(
@@ -210,17 +198,17 @@ export default function AccountScreen() {
               <ThemedText style={styles.optionsTitle}>
                 Developer Tools
               </ThemedText>
-              {/* <TouchableOpacity 
-                onPress={handleManualFetchAlerts} 
-                style={styles.optionsChild}
+              <TouchableOpacity 
+                onPress={handleManualFetchAlerts}
+                style={[styles.optionsChild, (alertsLoading) && {opacity: 0.5}]}
+                disabled={alertsLoading}
               >
                 <ThemedIcons 
-                  library='MaterialDesignIcons' 
                   name='download' 
                   size={15} 
                 />
-                <ThemedText>Manually Fetch Global Alerts</ThemedText>
-              </TouchableOpacity> */}
+                <ThemedText>{ alertsLoading ? 'Fetching...' : 'Manually Fetch Global Alerts'}</ThemedText>
+              </TouchableOpacity>
               <TouchableOpacity 
                 onPress={handleClearCache} 
                 style={styles.optionsChild}
@@ -254,10 +242,6 @@ export default function AccountScreen() {
         visible={showPayment}
         onClose={() => setShowPayment(false)}
         uri={paymentUrl || ""}
-      />
-      <LinearGradient
-        colors={['transparent', primaryColor]}
-        style={styles.gradient}
       />
     </ThemedView>
   );
@@ -314,12 +298,5 @@ const styles = StyleSheet.create({
   logoutButton: {
     width: '100%',
     marginVertical: 20,
-  },
-  gradient: {
-    position: 'absolute',
-    height: 50,
-    left: 0,
-    right: 0,
-    bottom: 0,
   },
 });

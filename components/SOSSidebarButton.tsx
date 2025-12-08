@@ -42,38 +42,32 @@ const SOSSidebarButton: React.FC = () => {
   });
 
   return (
-    <>
-      {session?.user?.safetyState.isInAnEmergency && (
-        <View style={styles.container}>
-          <TouchableOpacity
-            style={styles.wrapper}
-            onPress={() => router.push('/safety/safety')}
-          >
-            <Animated.View
-              style={[
-                styles.button,
-                {
-                  borderColor: animatedBorderColor,
-                  backgroundColor: 'rgba(255, 56, 56, .8)',
-                },
-              ]}
-            >
-              <ThemedIcons 
-                name='alert-circle'
-                size={18} 
-                color="white" 
-              />
-              <ThemedText style={{color: '#fff', fontSize: 9}}>
-                {session?.user?.safetyState?.emergencyType[0]?.toUpperCase()}
-                {session?.user?.safetyState?.emergencyType?.slice(1)}
-              </ThemedText>
-            </Animated.View>
-          </TouchableOpacity>
-        </View>
-      )}
-      
-    </>
-    
+  <View style={styles.container}>
+        <TouchableOpacity
+        style={styles.wrapper}
+        onPress={() => router.push('/safety/safety')}
+        >
+        <Animated.View
+            style={[
+            styles.button,
+            {
+                borderColor: animatedBorderColor,
+                backgroundColor: 'rgba(255, 56, 56, .8)',
+            },
+            ]}
+        >
+            <ThemedIcons 
+            name='alert-circle'
+            size={18} 
+            color="white" 
+            />
+            <ThemedText style={{color: '#fff', fontSize: 9}}>
+            {session?.user?.safetyState?.emergencyType[0]?.toUpperCase()}
+            {session?.user?.safetyState?.emergencyType?.slice(1)}
+            </ThemedText>
+        </Animated.View>
+        </TouchableOpacity>
+    </View>
   );
 };
 

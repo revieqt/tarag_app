@@ -61,36 +61,31 @@ const ActiveRouteSidebarButton: React.FC = () => {
   });
 
   return (
-    <>
-      {activeRoute && (
-        <View style={styles.container}>
-          <TouchableOpacity
-            style={styles.wrapper}
-            onPress={() => router.push('/(tabs)/maps')}
-          >
-            <Animated.View
-              style={[
-                styles.button,
-                {
-                  borderColor: animatedBorderColor,
-                  backgroundColor: 'rgba(0, 202, 255, .8)',
-                },
-              ]}
-            >
-              <ThemedIcons 
-                name={getRouteIcon(activeRoute?.mode || 'route')} 
-                size={18} 
-                color="white" 
-              />
-              <ThemedText style={{color: '#fff', fontSize: 9}}>
-                {formatDistance(activeRoute.distanceTravelled || 0)} km
-              </ThemedText>
-            </Animated.View>
-          </TouchableOpacity>
-        </View>
-      )}
-      
-    </>
+    <View style={styles.container}>
+        <TouchableOpacity
+        style={styles.wrapper}
+        onPress={() => router.push('/(tabs)/maps')}
+        >
+        <Animated.View
+            style={[
+            styles.button,
+            {
+                borderColor: animatedBorderColor,
+                backgroundColor: 'rgba(0, 202, 255, .8)',
+            },
+            ]}
+        >
+            <ThemedIcons 
+            name={getRouteIcon(activeRoute?.mode || 'route')} 
+            size={18} 
+            color="white" 
+            />
+            <ThemedText style={{color: '#fff', fontSize: 9}}>
+            {formatDistance(activeRoute?.distanceTravelled || 0)} km
+            </ThemedText>
+        </Animated.View>
+        </TouchableOpacity>
+    </View>
     
   );
 };
