@@ -243,6 +243,10 @@ export default function AccountScreen() {
         onClose={() => setShowPayment(false)}
         uri={paymentUrl || ""}
       />
+      <LinearGradient
+        colors={['transparent', primaryColor]}
+        style={styles.gradient}
+      />
     </ThemedView>
   );
 }
@@ -298,5 +302,12 @@ const styles = StyleSheet.create({
   logoutButton: {
     width: '100%',
     marginVertical: 20,
+  },
+  gradient: {
+    position: 'absolute',
+    height: 50,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
 });

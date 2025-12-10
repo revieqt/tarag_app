@@ -30,6 +30,7 @@ export default function TabLayout() {
         tabBarActiveTintColor: secondaryColor,
         headerShown: false,
         tabBarShowLabel: true,
+        unmountOnBlur: false,
         tabBarLabel: ({ children, color }) => <TabBarLabel color={color}>{children}</TabBarLabel>,
         tabBarStyle: Platform.select({
           ios: {

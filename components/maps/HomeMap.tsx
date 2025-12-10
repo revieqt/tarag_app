@@ -1,10 +1,10 @@
 import { useLocation } from '@/hooks/useLocation';
 import { useMapType } from '@/hooks/useMapType';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import MapView, { MAP_TYPES, PROVIDER_GOOGLE, Region } from 'react-native-maps';
 
-const HomeMap: React.FC = () => {
+const HomeMap: React.FC = memo(() => {
   const { latitude, longitude, loading } = useLocation();
   const { mapType: currentMapType } = useMapType();
   const animationRef = useRef<NodeJS.Timeout | null>(null);
@@ -86,7 +86,7 @@ const HomeMap: React.FC = () => {
       />
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   map: {
@@ -95,5 +95,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
 });
+
+HomeMap.displayName = 'HomeMap';
 
 export default HomeMap;
