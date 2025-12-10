@@ -65,56 +65,30 @@ function AppContent() {
   const [currentAnnouncement, setCurrentAnnouncement] = useState<Announcement | null>(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
 
-  // Load announcements when app starts
   useEffect(() => {
     const loadAnnouncements = async () => {
-      try {
-        console.log('[Layout] 🟡 Starting announcement load on app start');
-        const announcementsList = await getTodaysAnnouncementsToDisplay();
-        console.log(`[Layout] 📊 Got ${announcementsList.length} announcements to display`);
+      const announcementsList = await getTodaysAnnouncementsToDisplay();
+      if (announcementsList.length > 0) {
+        setAnnouncements(announcementsList);
+        const firstAnnouncement = await getNextAnnouncement(announcementsList);
         
-        if (announcementsList.length > 0) {
-          setAnnouncements(announcementsList);
-          const firstAnnouncement = await getNextAnnouncement(announcementsList);
-          console.log(`[Layout] 📌 First announcement:`, firstAnnouncement?.title);
-          
-          if (firstAnnouncement) {
-            setCurrentAnnouncement(firstAnnouncement);
-            console.log('[Layout] ✅ Setting modal visible');
-            setIsModalVisible(true);
-          }
-        } else {
-          console.log('[Layout] ℹ️ No announcements to display');
+        if (firstAnnouncement) {
+          setCurrentAnnouncement(firstAnnouncement);
+          setIsModalVisible(true);
         }
-      } catch (error) {
-        console.error('[Layout] ❌ Error loading announcements:', error);
       }
     };
-
     loadAnnouncements();
   }, []);
 
   const handleAnnouncementModalClose = async () => {
-    console.log('[Layout] 🔄 Announcement modal closed, checking for next');
     setIsModalVisible(false);
-    
-    try {
-      // Load next announcement if available
-      const nextAnnouncement = await handleNextAnnouncement(announcements);
-      console.log(`[Layout] ➡️ Next announcement:`, nextAnnouncement?.title);
-      
-      if (nextAnnouncement) {
-        setCurrentAnnouncement(nextAnnouncement);
-        // Small delay before showing next modal
-        setTimeout(() => {
-          console.log('[Layout] ✅ Showing next announcement modal');
-          setIsModalVisible(true);
-        }, 500);
-      } else {
-        console.log('[Layout] ✅ All announcements shown');
-      }
-    } catch (error) {
-      console.error('[Layout] ❌ Error handling next announcement:', error);
+    const nextAnnouncement = await handleNextAnnouncement(announcements);
+    if (nextAnnouncement) {
+      setCurrentAnnouncement(nextAnnouncement);
+      setTimeout(() => {
+        setIsModalVisible(true);
+      }, 100);
     }
   };
 
