@@ -1,4 +1,4 @@
-export const BACKEND_URL = "http://192.168.68.109:5000";
+export const BACKEND_URL = "http://192.168.68.108:5000";
 // export const BACKEND_URL = "https://tarag-v2-backend.onrender.com";
 export const SUPPORT_FORM_URL = "https://forms.gle/PPqT7Sy2JNY5NH2c6";
 export const MAX_FREE_MESSAGES_PER_DAY = 5;

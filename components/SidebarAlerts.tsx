@@ -6,8 +6,7 @@ import { useSession } from '@/context/SessionContext';
 import { useRoute } from '@/context/RouteContext';
 import ActiveRouteSidebarButton from './ActiveRouteSidebarButton';
 import SOSSidebarButton from './SOSSidebarButton';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+import { router } from 'expo-router';
 
 const SidebarAlerts: React.FC = () => {
   const [hideAlert, setHideAlert] = useState(false);
@@ -156,7 +155,7 @@ const SidebarAlerts: React.FC = () => {
     <ThemedView style={styles.openContainerInner} shadow color='primary'>
         {(session?.user?.safetyState?.isInAnEmergency ||activeRoute) && <View style={styles.unreadBadge} />}
         <TouchableOpacity onPress={() => setHideAlert(false)}>
-        <ThemedIcons name="bell" size={20} color='white'/>
+        <ThemedIcons name="apps" size={20}/>
         </TouchableOpacity>
     </ThemedView>
     </Animated.View>
@@ -199,6 +198,9 @@ const SidebarAlerts: React.FC = () => {
     >
         {activeRoute && <ActiveRouteSidebarButton />}
         {session?.user?.safetyState?.isInAnEmergency &&<SOSSidebarButton />}
+        <TouchableOpacity style={styles.qrButton} onPress={() => router.push('/qr/qr-scan')}>
+          <ThemedIcons name="qrcode-scan" size={30} color='black'/>
+        </TouchableOpacity>
     </Animated.View>
 
     <Animated.View
@@ -271,6 +273,14 @@ const styles = StyleSheet.create({
     backgroundColor: 'red',
     borderWidth: 2,
     borderColor: 'white',
+  },
+  qrButton:{
+    width: '100%',
+    aspectRatio: 1,
+    borderRadius: 100,
+    backgroundColor: '#00FFDE',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 

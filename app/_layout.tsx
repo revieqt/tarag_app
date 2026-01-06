@@ -7,10 +7,11 @@ import { ThemeProvider } from '@/context/ThemeContext';
 import { SessionProvider } from '@/context/SessionContext';
 import { View } from 'react-native';
 import { RouteProvider } from '@/context/RouteContext';
-import { AlertsProvider } from '@/context/AlertsContext';
+// import { AlertsProvider } from '@/context/AlertsContext';
 import mobileAds from 'react-native-google-mobile-ads';
 import * as SplashScreen from 'expo-splash-screen';
 import AnnouncementModal from '@/components/modals/AnnouncementModal';
+// import { configureLocationService } from "@/services/locationService";
 import {
   getTodaysAnnouncementsToDisplay,
   getNextAnnouncement,
@@ -20,9 +21,7 @@ import {
 
 SplashScreen.preventAutoHideAsync();
 
-export {
-  ErrorBoundary,
-} from 'expo-router';
+export { ErrorBoundary } from 'expo-router';
 
 export default function RootLayout() {
   const [loaded, error] = useFonts({
@@ -46,13 +45,17 @@ export default function RootLayout() {
       .then(() => console.log('AdMob initialized'));
   }, []);
 
+  // useEffect(() => {
+  //   configureLocationService();
+  // }, []);
+
   return (
     <ThemeProvider>
       <SessionProvider>
         <RouteProvider>
-          <AlertsProvider>
+          {/* <AlertsProvider> */}
             <AppContent />
-          </AlertsProvider>
+          {/* </AlertsProvider> */}
         </RouteProvider>
       </SessionProvider>
     </ThemeProvider>
@@ -114,7 +117,7 @@ function AppContent() {
           <Stack.Screen name="itineraries/itineraries" />
           <Stack.Screen name="itineraries/itineraries-create" />
           <Stack.Screen name="safety/safety" />
-          <Stack.Screen name="translate/translate" />
+          <Stack.Screen name="qr/qr-scan" />
           <Stack.Screen name="+not-found" />
         </Stack>
         

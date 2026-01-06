@@ -26,6 +26,7 @@
     "pouchdb-react-native": "^6.4.1",
     "react": "19.1.0",
     "react-native": "0.81.5",
+    "react-native-background-geolocation": "^4.19.3",
     "react-native-google-mobile-ads": "^16.0.0",
     "react-native-maps": "^1.26.18",
     "react-native-safe-area-context": "^5.6.2",

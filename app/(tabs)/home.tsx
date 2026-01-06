@@ -198,8 +198,8 @@ export default function HomeScreen() {
 
           <TouchableOpacity style={[styles.menuOptions, !isConnected && {opacity:.5},{backgroundColor: secondaryColor}]} onPress={() => router.push('/translate/translate')}
             disabled={!isConnected}>
-            <ThemedIcons name="translate-variant" size={25} color='#fff'/>
-            <ThemedText style={styles.menuOptionText}>Translate</ThemedText>
+            <ThemedIcons name="qrcode-scan" size={25} color='#fff'/>
+            <ThemedText style={styles.menuOptionText}>Scan QR</ThemedText>
           </TouchableOpacity>
         </View>
 

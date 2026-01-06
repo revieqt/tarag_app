@@ -7,7 +7,7 @@ import { ThemedView } from '@/components/ThemedView';
 import WebViewModal from '@/components/modals/WebViewModal';
 import { SUPPORT_FORM_URL} from '@/constants/Config';
 import { useSession } from '@/context/SessionContext';
-import { useAlerts } from '@/context/AlertsContext';
+// import { useAlerts } from '@/context/AlertsContext';
 import { useLocation } from '@/hooks/useLocation';
 import { openDocument } from '@/utils/documentUtils';
 import { router } from 'expo-router';
@@ -25,7 +25,7 @@ import ProfileImage from '@/components/ProfileImage';
 
 export default function AccountScreen() {
   const { session, clearSession } = useSession();
-  const { fetchGlobalAlerts, loading: alertsLoading } = useAlerts();
+  // const { fetchGlobalAlerts, loading: alertsLoading } = useAlerts();
   const user = session?.user;
   const primaryColor = useThemeColor({}, 'primary');
   const location = useLocation();
@@ -46,14 +46,14 @@ export default function AccountScreen() {
     }
   };
 
-  const handleManualFetchAlerts = async () => {
-    try {
-      await fetchGlobalAlerts();
-      Alert.alert('Success', 'Global alerts fetched successfully!');
-    } catch (error) {
-      Alert.alert('Error', 'Failed to fetch global alerts. Please try again.');
-    }
-  };
+  // const handleManualFetchAlerts = async () => {
+  //   try {
+  //     await fetchGlobalAlerts();
+  //     Alert.alert('Success', 'Global alerts fetched successfully!');
+  //   } catch (error) {
+  //     Alert.alert('Error', 'Failed to fetch global alerts. Please try again.');
+  //   }
+  // };
 
 
   const handleClearCache = async () => {
@@ -198,7 +198,7 @@ export default function AccountScreen() {
               <ThemedText style={styles.optionsTitle}>
                 Developer Tools
               </ThemedText>
-              <TouchableOpacity 
+              {/* <TouchableOpacity 
                 onPress={handleManualFetchAlerts}
                 style={[styles.optionsChild, (alertsLoading) && {opacity: 0.5}]}
                 disabled={alertsLoading}
@@ -208,7 +208,7 @@ export default function AccountScreen() {
                   size={15} 
                 />
                 <ThemedText>{ alertsLoading ? 'Fetching...' : 'Manually Fetch Global Alerts'}</ThemedText>
-              </TouchableOpacity>
+              </TouchableOpacity> */}
               <TouchableOpacity 
                 onPress={handleClearCache} 
                 style={styles.optionsChild}

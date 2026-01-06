@@ -17,6 +17,11 @@
       "googleMobileAdsAppId": "ca-app-pub-8325794315541816~2492770428",
       "config": {
         "googleMapsApiKey": "AIzaSyDI_dL8xl7gnjcPps-CXgDJM9DtF3oZPVI"
+      },
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "TaraG uses your location to show your current position and routes.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "TaraG requires background location to track trips accurately.",
+        "NSLocationAlwaysUsageDescription": "TaraG needs background location to provide travel features."
       }
     },
     "android": {
@@ -31,6 +36,9 @@
       "permissions": [
         "ACCESS_FINE_LOCATION",
         "ACCESS_COARSE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "FOREGROUND_SERVICE",
+        "WAKE_LOCK",
         "INTERNET",
         "VIBRATE",
         "SYSTEM_ALERT_WINDOW",
@@ -45,6 +53,17 @@
         {
           "androidAppId": "ca-app-pub-8325794315541816~1418527751",
           "iosAppId": "ca-app-pub-8325794315541816~2492770428"
+        }
+      ],
+      [
+        "react-native-background-geolocation",
+        {
+          "backgroundPermissionRationale": {
+            "title": "Allow TaraG to access your location",
+            "message": "TaraG needs your location in the background to track trips, routes, and safety features.",
+            "positiveAction": "Allow",
+            "negativeAction": "Cancel"
+          }
         }
       ]
     ]
