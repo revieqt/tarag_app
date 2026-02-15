@@ -13,6 +13,7 @@ import HomeMap from '@/components/maps/HomeMap';
 import Banner from '@/components/ads/BannerAd';
 import { useInternetConnection } from '@/utils/checkInternetConnection';
 import SidebarAlerts from '@/components/SidebarAlerts';
+import WeatherCard from '@/components/WeatherCard';
 
 export default function HomeScreen() {
   const { session } = useSession();
@@ -267,7 +268,7 @@ export default function HomeScreen() {
             </ThemedView>
           </View>
         </View>
-
+        <WeatherCard />
         {/* {!user?.isProUser && isConnected && 
           <View style={styles.adContainer}>
             <Banner />

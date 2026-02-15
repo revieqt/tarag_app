@@ -91,6 +91,7 @@ export const useLocation = () => {
       if (!response.ok) throw new Error('Failed to fetch address data');
 
       const data: NominatimResponse = await response.json();
+      console.log('[useLocation] Nominatim response:', data);
       const address = data.address;
 
       // Extract fields with better fallbacks
@@ -113,6 +114,8 @@ export const useLocation = () => {
       const region = address.region || state;
       const country = address.country || '';
 
+      console.log('[useLocation] Extracted from nominatim:', { suburb, city, state, region, country });
+
       return {
         latitude,
         longitude,
@@ -123,9 +126,12 @@ export const useLocation = () => {
         country,
       };
     } catch (err) {
+      console.log('[useLocation] Nominatim failed, using Metro Cebu fallback:', err);
       // Fallback to Metro Cebu JSON
       const metroCebuData = await fetchMetroCebuData();
+      console.log('[useLocation] Metro Cebu data loaded:', metroCebuData.length > 0 ? 'yes' : 'no');
       const nearest = getNearestMetroCebuAddressFromList(latitude, longitude, metroCebuData);
+      console.log('[useLocation] Nearest Metro Cebu location:', nearest);
       return {
         latitude,
         longitude,
@@ -152,10 +158,14 @@ export const useLocation = () => {
         accuracy: Location.Accuracy.High,
       });
       const { latitude, longitude } = location.coords;
+      console.log('[useLocation] Got coordinates:', { latitude, longitude });
       const addressData = await getAddressFromCoordinates(latitude, longitude);
+      console.log('[useLocation] Final address data:', addressData);
       setLocationData(addressData);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to get location');
+      const errorMsg = err instanceof Error ? err.message : 'Failed to get location';
+      console.error('[useLocation] Error:', errorMsg);
+      setError(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -170,7 +180,13 @@ export const useLocation = () => {
   };
 
   return {
-    ...locationData,
+    latitude: locationData?.latitude ?? 0,
+    longitude: locationData?.longitude ?? 0,
+    suburb: locationData?.suburb ?? '',
+    city: locationData?.city ?? '',
+    state: locationData?.state ?? '',
+    region: locationData?.region ?? '',
+    country: locationData?.country ?? '',
     loading,
     error,
     refreshLocation,

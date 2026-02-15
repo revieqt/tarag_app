@@ -152,12 +152,12 @@ const SidebarAlerts: React.FC = () => {
     ]}
     pointerEvents={hideAlert ? 'auto' : 'none'}
     >
-    <ThemedView style={styles.openContainerInner} shadow color='primary'>
+      <ThemedView style={styles.openContainerInner} shadow color='primary'>
         {(session?.user?.safetyState?.isInAnEmergency ||activeRoute) && <View style={styles.unreadBadge} />}
         <TouchableOpacity onPress={() => setHideAlert(false)}>
         <ThemedIcons name="apps" size={20}/>
         </TouchableOpacity>
-    </ThemedView>
+      </ThemedView>
     </Animated.View>
 
     {/* Main Container (Visible State) */}
