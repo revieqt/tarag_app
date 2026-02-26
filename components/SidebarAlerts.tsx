@@ -198,9 +198,6 @@ const SidebarAlerts: React.FC = () => {
     >
         {activeRoute && <ActiveRouteSidebarButton />}
         {session?.user?.safetyState?.isInAnEmergency &&<SOSSidebarButton />}
-        <TouchableOpacity style={styles.qrButton} onPress={() => router.push('/qr/qr-scan')}>
-          <ThemedIcons name="qrcode-scan" size={30} color='black'/>
-        </TouchableOpacity>
     </Animated.View>
 
     <Animated.View

@@ -10,18 +10,19 @@ import Wave from '@/components/Wave';
 import { useRouter } from 'expo-router';  
 import { useInternetConnection } from '@/utils/checkInternetConnection';
 import { CustomAlert } from '@/components/Alert';
-import { loginUser } from '@/services/authService';
-import { useSession } from '@/context/SessionContext';
+import { useAuthLogin } from '@/context/SessionContext';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [focusedInput, setFocusedInput] = useState<string | null>(null);
   const [showNoInternetAlert, setShowNoInternetAlert] = useState(false);
   const router = useRouter();
   const isConnected = useInternetConnection();
+  
+  // Use the auth hook
+  const { login, loading, error } = useAuthLogin();
 
   const handleRegisterRedirect = () => {
     if (!isConnected) {
@@ -30,8 +31,6 @@ export default function LoginScreen() {
       router.push('/auth/register');
     }
   };
-
-  const { updateSession } = useSession();
 
   const handleLogin = async () => {
     if (!isConnected) {
@@ -44,11 +43,10 @@ export default function LoginScreen() {
       return;
     }
 
-    setLoading(true);
     setErrorMsg('');
 
     try {
-      const result = await loginUser(email, password);
+      const result = await login(email, password);
       
       if (result.user.status === 'pending') {
         router.push({
@@ -73,53 +71,13 @@ export default function LoginScreen() {
         return;
       }
 
-      const userData = {
-        id: result.user._id,
-        fname: result.user.fname,
-        lname: result.user.lname,
-        username: result.user.username,
-        email: result.user.email,
-        bdate: new Date(result.user.bdate),
-        gender: result.user.gender,
-        contactNumber: result.user.contactNumber,
-        profileImage: result.user.profileImage,
-        likes: result.user.likes || [],
-        isProUser: result.user.isProUser,
-        bio: result.user.bio || '',
-        status: result.user.status,
-        type: result.user.type,
-        expPoints: result.user.expPoints,
-        createdOn: new Date(result.user.createdOn),
-        isFirstLogin: result.user.isFirstLogin,
-        safetyState: result.user.safetyState,
-        visibilitySettings: {
-          isProfilePublic: true,
-          isTravelInfoPublic: true,
-          isPersonalInfoPublic: true,
-        },
-        securitySettings: {
-          is2FAEnabled: false,
-        },
-        taraBuddySettings: {
-          isTaraBuddyEnabled: false,
-        },
-      };
-
-      await updateSession({
-        user: userData,
-        accessToken: result.accessToken,
-        refreshToken: result.refreshToken,
-      });
-
       if (result.user.isFirstLogin) {
         router.push('/account/firstLogin' as any);
       } else {
         router.replace('/home' as any);
       }
-    } catch (error: any) {
-      setErrorMsg(error.message);
-    } finally {
-      setLoading(false);
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Login failed');
     }
   };
 
@@ -180,7 +138,7 @@ export default function LoginScreen() {
                 Forgot Password?
               </ThemedText>
             </TouchableOpacity>
-            <ThemedText style={{ textAlign: 'center', color: 'red'}}>{errorMsg || ''}</ThemedText>
+            <ThemedText style={{ textAlign: 'center', color: 'red'}}>{errorMsg || error || ''}</ThemedText>
 
             <Button
               title={loading ? 'Logging in...' : 'Login'}

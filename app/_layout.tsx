@@ -11,6 +11,7 @@ import { RouteProvider } from '@/context/RouteContext';
 import mobileAds from 'react-native-google-mobile-ads';
 import * as SplashScreen from 'expo-splash-screen';
 import AnnouncementModal from '@/components/modals/AnnouncementModal';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 // import { configureLocationService } from "@/services/locationService";
 import {
   getTodaysAnnouncementsToDisplay,
@@ -22,6 +23,16 @@ import {
 SplashScreen.preventAutoHideAsync();
 
 export { ErrorBoundary } from 'expo-router';
+
+// Create a client for React Query
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      gcTime: 1000 * 60 * 10, // 10 minutes
+    },
+  },
+});
 
 export default function RootLayout() {
   const [loaded, error] = useFonts({
@@ -50,15 +61,17 @@ export default function RootLayout() {
   // }, []);
 
   return (
-    <ThemeProvider>
-      <SessionProvider>
-        <RouteProvider>
-          {/* <AlertsProvider> */}
-            <AppContent />
-          {/* </AlertsProvider> */}
-        </RouteProvider>
-      </SessionProvider>
-    </ThemeProvider>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
+        <SessionProvider>
+          <RouteProvider>
+            {/* <AlertsProvider> */}
+              <AppContent />
+            {/* </AlertsProvider> */}
+          </RouteProvider>
+        </SessionProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
   );
 }
 
@@ -116,6 +129,7 @@ function AppContent() {
           <Stack.Screen name="routes/routes-create" />
           <Stack.Screen name="itineraries/itineraries" />
           <Stack.Screen name="itineraries/itineraries-create" />
+          <Stack.Screen name="itineraries/[id]" />
           <Stack.Screen name="safety/safety" />
           <Stack.Screen name="qr/qr-scan" />
           <Stack.Screen name="+not-found" />

@@ -200,7 +200,7 @@ export default function HomeScreen() {
           <TouchableOpacity style={[styles.menuOptions, !isConnected && {opacity:.5},{backgroundColor: secondaryColor}]} onPress={() => router.push('/translate/translate')}
             disabled={!isConnected}>
             <ThemedIcons name="qrcode-scan" size={25} color='#fff'/>
-            <ThemedText style={styles.menuOptionText}>Scan QR</ThemedText>
+            <ThemedText style={styles.menuOptionText}>Scan</ThemedText>
           </TouchableOpacity>
         </View>
 
@@ -268,7 +268,11 @@ export default function HomeScreen() {
             </ThemedView>
           </View>
         </View>
-        <WeatherCard />
+
+        <View style={{paddingHorizontal: 16, marginBottom: 20}}>
+          <WeatherCard />
+        </View>
+        
         {/* {!user?.isProUser && isConnected && 
           <View style={styles.adContainer}>
             <Banner />

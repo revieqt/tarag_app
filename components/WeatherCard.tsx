@@ -152,7 +152,7 @@ export default function WeatherCard({ latitude, longitude, date, city }: Weather
 
   if (showLoading) {
     return (
-      <ThemedView shadow color='primary' style={[styles.locationContent, { height: 193 }]}>
+      <ThemedView color='primary' style={[styles.locationContent, { height: 193 }]}>
         <View style={styles.descLoading}><LoadingContainerAnimation /></View>
         <View style={styles.locationLoading}><LoadingContainerAnimation /></View>
         <View style={styles.weatherTypeLoading}><LoadingContainerAnimation /></View>
@@ -196,7 +196,7 @@ export default function WeatherCard({ latitude, longitude, date, city }: Weather
   }
 
   return (
-    <ThemedView shadow color='primary' style={styles.locationContent}>
+    <ThemedView color='primary' style={styles.locationContent}>
       <View>
         <ThemedText style={{ opacity: 0.5, fontSize: 12 }}>
           {hasLocationProps ? 'Weather for' : "You're currently at"}
@@ -234,7 +234,7 @@ export default function WeatherCard({ latitude, longitude, date, city }: Weather
                 ? `${displayWeather.precipitation}mm`
                 : 'N/A'}
             </ThemedText>
-            <ThemedText style={styles.weatherLabel}>Rainfall</ThemedText>
+            <ThemedText style={styles.weatherLabel}>Rain</ThemedText>
           </View>
           <View style={styles.weather}>
             <ThemedIcons name='water' size={20} color='#5A7D9A' />
@@ -243,7 +243,7 @@ export default function WeatherCard({ latitude, longitude, date, city }: Weather
                 ? `${displayWeather.humidity.toFixed(0)}%`
                 : 'N/A'}
             </ThemedText>
-            <ThemedText style={styles.weatherLabel}>Humidity</ThemedText>
+            <ThemedText style={styles.weatherLabel}>Humid</ThemedText>
           </View>
           <View style={styles.weather}>
             <ThemedIcons name='fan' size={20} color='#5A7D9A' />
@@ -274,7 +274,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     marginBottom: 15,
     borderWidth: 1,
-    borderColor: '#ccc3',
+    borderColor: 'transparent',
   },
   weatherDetailsContainer: {
     justifyContent: 'space-between',

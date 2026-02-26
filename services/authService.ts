@@ -1,4 +1,5 @@
 import { BACKEND_URL } from '@/constants/Config';
+import { DeviceInfo } from '@/hooks/useDeviceInfo';
 
 interface LoginResponse {
   user: {
@@ -44,14 +45,26 @@ interface LoginResponse {
   refreshToken: string;
 }
 
-export const loginUser = async (identifier: string, password: string) => {
+export const loginUser = async (identifier: string, password: string, device?: Partial<DeviceInfo>) => {
   try {
     const response = await fetch(`${BACKEND_URL}/api/auth/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ identifier, password }),
+      body: JSON.stringify({ 
+        identifier, 
+        password,
+        device: device ? {
+          deviceId: device.deviceId,
+          brand: device.brand,
+          model: device.model,
+          os: device.os,
+          osVersion: device.osVersion,
+          deviceType: device.deviceType,
+          appVersion: device.appVersion,
+        } : undefined
+      }),
     });
 
     if (!response.ok) {
@@ -82,14 +95,25 @@ interface VerificationResponse {
   id: string;
 }
 
-export const sendEmailVerificationCode = async (email: string): Promise<VerificationResponse> => {
+export const sendEmailVerificationCode = async (email: string, device?: Partial<DeviceInfo>): Promise<VerificationResponse> => {
   try {
     const response = await fetch(`${BACKEND_URL}/api/auth/send-verification`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ email }),
+      body: JSON.stringify({ 
+        email,
+        device: device ? {
+          deviceId: device.deviceId,
+          brand: device.brand,
+          model: device.model,
+          os: device.os,
+          osVersion: device.osVersion,
+          deviceType: device.deviceType,
+          appVersion: device.appVersion,
+        } : undefined
+      }),
     });
 
     if (!response.ok) {
@@ -104,14 +128,27 @@ export const sendEmailVerificationCode = async (email: string): Promise<Verifica
   }
 };
 
-export const verifyEmail = async (email: string, code: string, sentCode: string) => {
+export const verifyEmail = async (email: string, code: string, sentCode: string, device?: Partial<DeviceInfo>) => {
   try {
     const response = await fetch(`${BACKEND_URL}/api/auth/verify-email`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ email, code, sentCode }),
+      body: JSON.stringify({ 
+        email, 
+        code, 
+        sentCode,
+        device: device ? {
+          deviceId: device.deviceId,
+          brand: device.brand,
+          model: device.model,
+          os: device.os,
+          osVersion: device.osVersion,
+          deviceType: device.deviceType,
+          appVersion: device.appVersion,
+        } : undefined
+      }),
     });
 
     if (!response.ok) {
@@ -126,13 +163,22 @@ export const verifyEmail = async (email: string, code: string, sentCode: string)
   }
 };
 
-export const registerUser = async (userData: RegisterUserData) => {
+export const registerUser = async (userData: RegisterUserData, device?: Partial<DeviceInfo>) => {
   try {
     const requestData = {
       ...userData,
       type: 'traveler', // Default user type
       lname: userData.lname,
       contactNumber: userData.contactNumber,
+      device: device ? {
+        deviceId: device.deviceId,
+        brand: device.brand,
+        model: device.model,
+        os: device.os,
+        osVersion: device.osVersion,
+        deviceType: device.deviceType,
+        appVersion: device.appVersion,
+      } : undefined
     };
     
     const response = await fetch(`${BACKEND_URL}/api/auth/register`, {
@@ -155,13 +201,23 @@ export const registerUser = async (userData: RegisterUserData) => {
   }
 };
 
-export const resetPassword = async (identifier: string, newPassword: string) => {
+export const resetPassword = async (identifier: string, newPassword: string, device?: Partial<DeviceInfo>) => {
   try {
     // First check if identifier looks like an email
     const isEmail = identifier.includes('@');
-    const payload = isEmail 
-      ? { email: identifier, newPassword }
-      : { userId: identifier, newPassword };
+    const payload = {
+      ...(isEmail ? { email: identifier } : { userId: identifier }),
+      newPassword,
+      device: device ? {
+        deviceId: device.deviceId,
+        brand: device.brand,
+        model: device.model,
+        os: device.os,
+        osVersion: device.osVersion,
+        deviceType: device.deviceType,
+        appVersion: device.appVersion,
+      } : undefined
+    };
     
     const response = await fetch(`${BACKEND_URL}/api/auth/reset-password`, {
       method: 'POST',
@@ -189,6 +245,7 @@ interface UpdatePasswordParams {
   newPassword: string;
   confirmPassword: string;
   accessToken: string;
+  device?: Partial<DeviceInfo>;
 }
 
 export const updatePassword = async ({
@@ -196,7 +253,8 @@ export const updatePassword = async ({
   oldPassword,
   newPassword,
   confirmPassword,
-  accessToken
+  accessToken,
+  device
   }: UpdatePasswordParams) => {
   try {
     const response = await fetch(`${BACKEND_URL}/api/auth/change-password`, {
@@ -208,7 +266,16 @@ export const updatePassword = async ({
       body: JSON.stringify({
         oldPassword,
         newPassword,
-        confirmPassword
+        confirmPassword,
+        device: device ? {
+          deviceId: device.deviceId,
+          brand: device.brand,
+          model: device.model,
+          os: device.os,
+          osVersion: device.osVersion,
+          deviceType: device.deviceType,
+          appVersion: device.appVersion,
+        } : undefined
       }),
     });
 

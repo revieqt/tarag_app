@@ -26,7 +26,7 @@ import GradientBlobs from '@/components/GradientBlobs';
 import ThemedIcons from '@/components/ThemedIcons';
 import RoundedButton from '@/components/RoundedButton';
 import { GENDER_OPTIONS } from '@/constants/Config';
-import { registerUser } from '@/services/authService';
+import { useAuthRegister } from '@/context/SessionContext';
 
 export default function RegisterScreen() {
   const [fname, setFname] = useState('');
@@ -38,11 +38,13 @@ export default function RegisterScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const scrollRef = useRef<ScrollView>(null);
   const [areaCode, setAreaCode] = useState('+63');
   const [success, setSuccess] = useState(false);
+
+  // Use the auth hook
+  const { register, loading, error } = useAuthRegister();
 
   // Animation states
   const slideAnim = useRef(new Animated.Value(0)).current;
@@ -129,10 +131,8 @@ export default function RegisterScreen() {
       return;
     }
 
-    setLoading(true);
-
     try {
-      await registerUser({
+      await register({
         fname,
         lname: lname || undefined,
         bdate: bdate!.toISOString(),
@@ -144,11 +144,9 @@ export default function RegisterScreen() {
       });
 
       setSuccess(true);
-    } catch (error: any) {
-      setErrorMsg(error.message);
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Registration failed');
       scrollRef.current?.scrollTo({ y: 0, animated: true });
-    } finally {
-      setLoading(false);
     }
   };
 

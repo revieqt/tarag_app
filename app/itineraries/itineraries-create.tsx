@@ -7,8 +7,7 @@ import TextField from '@/components/TextField';
 import ThemedIcons from '@/components/ThemedIcons';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import { useSession } from '@/context/SessionContext';
-// import { useSaveItinerary } from '@/services/itinerariesApiService';
+import { useCreateItinerary } from '@/hooks/useItinerary';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Alert,  KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
@@ -50,10 +49,10 @@ function getNumDays(start: Date, end: Date): number {
 }
 
 export default function CreateItineraryScreen() {
-  const { session } = useSession();
   const router = useRouter();
-//   const { saveItineraryComplete } = useSaveItinerary();
   const params = useLocalSearchParams();
+  const { latitude, longitude, loading: locationLoading } = useLocation();
+  const createItineraryMutation = useCreateItinerary();
   const [descriptionHeight, setDescriptionHeight] = useState(60);
 
   // State
@@ -74,10 +73,6 @@ export default function CreateItineraryScreen() {
   const [modalLocationData, setModalLocationData] = useState<Partial<LocationItem>>({});
   const [mapRegion, setMapRegion] = useState<Region | null>(null);
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
-  
-  const { latitude, longitude, loading: locationLoading } = useLocation();
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
 
   // For daily plan, auto-generate days from startDate to endDate
@@ -109,6 +104,15 @@ export default function CreateItineraryScreen() {
       setPlanDaily(false);
     }
   }, [numDays]);
+
+  // Handle mutation success
+  useEffect(() => {
+    if (createItineraryMutation.isSuccess) {
+      setTimeout(() => {
+        router.replace('/itineraries');
+      }, 1500);
+    }
+  }, [createItineraryMutation.isSuccess, router]);
 
   // Add a location to a day
   const addLocationToDay = (dayIdx: number, loc: LocationItem) => {
@@ -146,47 +150,42 @@ export default function CreateItineraryScreen() {
   };
 
   // Submit handler
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!title.trim() || !startDate || !endDate) {
       Alert.alert('Missing Required Fields', 'Please enter a title, start date, and end date.');
       return;
     }
-    const createdOn = new Date();
-    let result = {
-      userID: session?.user?.id || '',
-      username: session?.user?.username || '',
-      title,
-      description,
-      type,
-      createdOn: createdOn.toISOString(),
-      startDate: startDate ? startDate.toISOString() : null,
-      endDate: endDate ? endDate.toISOString() : null,
-      planDaily,
-      locations: planDaily
-        ? autoDailyLocations.map((d) => ({
-            date: d.date ? d.date.toISOString() : null,
-            locations:
-              dailyLocations.find(dl => dl.date && d.date && dl.date.toDateString() === d.date.toDateString())?.locations || [],
-          }))
-        : locations,
-    };
-    setLoading(true);
-    setSuccess(false);
+
+    if ((planDaily && dailyLocations.length === 0) || (!planDaily && locations.length === 0)) {
+      Alert.alert('Missing Locations', 'Please add at least one location.');
+      return;
+    }
+
     setErrorMessage(undefined);
 
-    // (async () => {
-    //   console.log('🎯 Creating itinerary with data:', result);
-    //   const saveResult = await saveItineraryComplete(result);
-    //   setLoading(false);
-    //   setSuccess(saveResult.success);
-    //   setErrorMessage(saveResult.errorMessage);
-      
-    //   if (saveResult.success) {
-    //     console.log('✅ Itinerary created successfully!');
-    //   } else {
-    //     console.error('❌ Failed to create itinerary:', saveResult.errorMessage);
-    //   }
-    // })();
+    const itineraryData = {
+      title: title.trim(),
+      description: description.trim(),
+      type,
+      startDate: startDate.toISOString(),
+      endDate: endDate.toISOString(),
+      planDaily,
+      locations: planDaily
+        ? autoDailyLocations
+            .filter(d => d.locations.length > 0)
+            .map((d) => ({
+              date: d.date ? d.date.toISOString() : '',
+              locations: d.locations,
+            }))
+        : locations,
+    };
+
+    try {
+      await createItineraryMutation.mutateAsync(itineraryData);
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : 'Failed to create itinerary';
+      setErrorMessage(errorMsg);
+    }
   };
 
   // Reverse geocode to get location name from coordinates
@@ -462,9 +461,9 @@ export default function CreateItineraryScreen() {
         </ScrollView>
       </KeyboardAvoidingView>
       <ProcessModal
-        visible={loading || success || !!errorMessage}
-        success={success}
-        successMessage="Itinerary saved!"
+        visible={createItineraryMutation.isPending || createItineraryMutation.isSuccess || !!errorMessage}
+        success={createItineraryMutation.isSuccess}
+        successMessage="Itinerary created successfully!"
         errorMessage={errorMessage}
       />
       <RoundedButton
@@ -472,8 +471,8 @@ export default function CreateItineraryScreen() {
         onPress={handleSubmit}
         style={{
           ...styles.cubeButton,
-          opacity: !title.trim() || !startDate || !endDate ? 0.5 : 1,
-          pointerEvents: !title.trim() || !startDate || !endDate ? 'none' : 'auto'
+          opacity: !title.trim() || !startDate || !endDate || createItineraryMutation.isPending ? 0.5 : 1,
+          pointerEvents: !title.trim() || !startDate || !endDate || createItineraryMutation.isPending ? 'none' : 'auto'
         }}
       />
 
