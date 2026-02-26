@@ -53,8 +53,7 @@ const LocationDisplay: React.FC<LocationDisplayProps> = ({ content }) => {
             <View style={styles.pinColumn}>
               <View style={{backgroundColor: primaryColor, borderRadius: 50, width: 20, height: 20, justifyContent: 'center', alignItems: 'center'}}>
                 <ThemedIcons
-                  library="MaterialIcons"
-                  name="location-on"
+                  name="map-marker"
                   size={18}
                   color="green"
                 />

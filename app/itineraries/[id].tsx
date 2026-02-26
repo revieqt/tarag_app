@@ -423,7 +423,7 @@ export default function ItineraryViewScreen() {
         <View style={styles.detailsContainer}>
           <ThemedIcons name="calendar" size={13} color="#fff"/>
           <ThemedText style={{ color: '#fff', fontSize: 11 }}>
-            {formatDateToString(itinerary?.startDate)} - {formatDateToString(itinerary?.endDate)}
+            {formatDateToString(itinerary?.startDate || "")} - {formatDateToString(itinerary?.endDate || "")}
           </ThemedText>
         </View>
         <View style={styles.detailsContainer}>
@@ -440,12 +440,11 @@ export default function ItineraryViewScreen() {
         </View>
       </LinearGradient>
 
-      <LinearGradient
-        colors={['transparent','#000']}
-        style={styles.bottomGradient}
-      >
-        {selectedLocation ? (
-        <View>
+      {selectedLocation ? (
+        <LinearGradient
+          colors={['transparent','#000']}
+          style={styles.bottomGradient}
+        >
             <TouchableOpacity onPress={() => setSelectedLocation(null)} style={styles.goBack}>
                 <ThemedIcons name="arrow-left" size={20} color="#fff" />
                 <ThemedText style={{color: '#fff', fontSize: 11}}>Back</ThemedText>
@@ -485,7 +484,7 @@ export default function ItineraryViewScreen() {
                 : undefined
             }
             />  */}
-        </View>
+        </LinearGradient>
         ) : (
         itinerary && (
             <ThemedView style={styles.bottomSheet} color='primary'>
@@ -530,8 +529,6 @@ export default function ItineraryViewScreen() {
             </ThemedView>
         )
         )}
-      </LinearGradient>
-
       <ShareModal
         visible={showShare}
         link={itinerary ? `exp://tarag-v2.exp.app/itineraries/${itinerary._id}` : ''}
@@ -623,8 +620,7 @@ const styles = StyleSheet.create({
     padding: 16,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    maxHeight: '60%',
-    minHeight: 250,
+    maxHeight: '40%',
   },
   description:{
     borderBottomWidth: 1,

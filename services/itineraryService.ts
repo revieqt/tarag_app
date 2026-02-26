@@ -26,6 +26,7 @@ export interface Itinerary {
   status: 'active' | 'cancelled' | 'done';
   createdOn: string;
   updatedOn: string;
+  username?: string; // Optional - included when viewing individual itinerary
 }
 
 export interface CreateItineraryData {
