@@ -1,5 +1,4 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useDeviceInfo } from './useDeviceInfo';
 import {
   viewItinerary as viewItineraryService,
   viewUserItineraries as viewUserItinerariesService,
@@ -26,14 +25,11 @@ const itineraryKeys = {
  * Hook to fetch all user itineraries
  */
 export function useGetUserItineraries() {
-  const deviceInfo = useDeviceInfo();
-
   return useQuery({
     queryKey: itineraryKeys.list(),
-    queryFn: async () => await viewUserItinerariesService(deviceInfo),
-    staleTime: 1000 * 60 * 5, // 5 minutes
-    gcTime: 1000 * 60 * 10, // 10 minutes (formerly cacheTime)
-    enabled: deviceInfo.isLoaded,
+    queryFn: async () => await viewUserItinerariesService(),
+    staleTime: 1000 * 60 * 15, // 15 minutes
+    gcTime: 1000 * 60 * 30, // 30 minutes (formerly cacheTime)
   });
 }
 
@@ -41,14 +37,12 @@ export function useGetUserItineraries() {
  * Hook to fetch a single itinerary by ID
  */
 export function useGetItinerary(itineraryID: string | null) {
-  const deviceInfo = useDeviceInfo();
-
   return useQuery({
     queryKey: itineraryKeys.detail(itineraryID || ''),
-    queryFn: async () => await viewItineraryService(itineraryID!, deviceInfo),
-    staleTime: 1000 * 60 * 5, // 5 minutes
-    gcTime: 1000 * 60 * 10, // 10 minutes
-    enabled: deviceInfo.isLoaded && !!itineraryID,
+    queryFn: async () => await viewItineraryService(itineraryID!),
+    staleTime: 1000 * 60 * 15, // 15 minutes
+    gcTime: 1000 * 60 * 30, // 30 minutes (formerly cacheTime)
+    enabled: !!itineraryID,
   });
 }
 
@@ -56,12 +50,11 @@ export function useGetItinerary(itineraryID: string | null) {
  * Hook to create a new itinerary
  */
 export function useCreateItinerary() {
-  const deviceInfo = useDeviceInfo();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (itineraryData: CreateItineraryData) =>
-      await createItineraryService(itineraryData, deviceInfo),
+      await createItineraryService(itineraryData),
     onSuccess: () => {
       // Invalidate and refetch user itineraries list
       queryClient.invalidateQueries({ queryKey: itineraryKeys.list() });
@@ -73,12 +66,11 @@ export function useCreateItinerary() {
  * Hook to update an itinerary
  */
 export function useUpdateItinerary() {
-  const deviceInfo = useDeviceInfo();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async ({ itineraryID, updateData }: { itineraryID: string; updateData: UpdateItineraryData }) =>
-      await updateItineraryService(itineraryID, updateData, deviceInfo),
+      await updateItineraryService(itineraryID, updateData),
     onSuccess: (data) => {
       // Update the specific itinerary in cache
       queryClient.setQueryData(itineraryKeys.detail(data._id), data);
@@ -92,11 +84,10 @@ export function useUpdateItinerary() {
  * Hook to delete an itinerary
  */
 export function useDeleteItinerary() {
-  const deviceInfo = useDeviceInfo();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (itineraryID: string) => await deleteItineraryService(itineraryID, deviceInfo),
+    mutationFn: async (itineraryID: string) => await deleteItineraryService(itineraryID),
     onSuccess: (data) => {
       // Remove the deleted itinerary from cache
       queryClient.removeQueries({ queryKey: itineraryKeys.detail(data._id) });
@@ -110,11 +101,10 @@ export function useDeleteItinerary() {
  * Hook to cancel an itinerary
  */
 export function useCancelItinerary() {
-  const deviceInfo = useDeviceInfo();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (itineraryID: string) => await cancelItineraryService(itineraryID, deviceInfo),
+    mutationFn: async (itineraryID: string) => await cancelItineraryService(itineraryID),
     onSuccess: (data) => {
       // Update the specific itinerary in cache
       queryClient.setQueryData(itineraryKeys.detail(data._id), data);
@@ -128,11 +118,10 @@ export function useCancelItinerary() {
  * Hook to mark an itinerary as done
  */
 export function useMarkItineraryAsDone() {
-  const deviceInfo = useDeviceInfo();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (itineraryID: string) => await markItineraryAsDoneService(itineraryID, deviceInfo),
+    mutationFn: async (itineraryID: string) => await markItineraryAsDoneService(itineraryID),
     onSuccess: (data) => {
       // Update the specific itinerary in cache
       queryClient.setQueryData(itineraryKeys.detail(data._id), data);

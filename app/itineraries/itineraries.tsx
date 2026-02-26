@@ -14,6 +14,7 @@ import {
 } from '@/hooks/useItinerary';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import OptionsPopup from '@/components/OptionsPopup';
+import ShareModal from '@/components/modals/ShareModal';
 
 export default function ItinerariesScreen() {
   const router = useRouter();
@@ -23,6 +24,8 @@ export default function ItinerariesScreen() {
   const markAsDoneMutation = useMarkItineraryAsDone();
   const cancelItineraryMutation = useCancelItinerary();
   const [selectedItineraryId, setSelectedItineraryId] = useState<string | null>(null);
+  const [showShare, setShowShare] = useState(false);
+  const [shareLink, setShareLink] = useState('');
 
   // Sort itineraries: active first, then by createdOn date
   const sortedItineraries = itineraries ? [...itineraries].sort((a, b) => {
@@ -157,40 +160,44 @@ export default function ItinerariesScreen() {
                           <ThemedIcons name='information' size={18}/>
                           <ThemedText style={{marginLeft: 10}}>View Itinerary</ThemedText>
                         </TouchableOpacity>,
-                        itinerary.status === 'active' && (
-                          <TouchableOpacity style={[styles.option]} disabled>
-                            <ThemedIcons name='account-group' size={18}/>
-                            <ThemedText style={{marginLeft: 10}}>Create Group with Itinerary</ThemedText>
-                          </TouchableOpacity>
-                        ),
+                        <TouchableOpacity style={[styles.option]} disabled>
+                          <ThemedIcons name='account-group' size={18}/>
+                          <ThemedText style={{marginLeft: 10}}>Create Group with Itinerary</ThemedText>
+                        </TouchableOpacity>
+                        ,
+                        <TouchableOpacity style={styles.option} onPress={() => {
+                          setShareLink(`exp://tarag-v2.exp.app/itineraries/${itinerary._id}`);
+                          setShowShare(true);
+                        }}>
+                          <ThemedIcons name="share" size={20} />
+                          <ThemedText style={{marginLeft: 10}}>Share Itinerary</ThemedText>
+                        </TouchableOpacity>,
                         <TouchableOpacity 
                           disabled
                           style={[styles.option]}>
                           <ThemedIcons name='pencil' size={18}/>
                           <ThemedText style={{marginLeft: 10}}>Edit Itinerary</ThemedText>
                         </TouchableOpacity>,
-                        itinerary.status === 'active' && (
-                          <TouchableOpacity 
-                            style={styles.option}
-                            onPress={() => {
-                              setSelectedItineraryId(itinerary._id);
-                              handleMarkAsDone(itinerary._id);
-                            }}>
-                            <ThemedIcons name='check-circle' size={18}/>
-                            <ThemedText style={{marginLeft: 10}}>Mark as Done</ThemedText>
-                          </TouchableOpacity>
-                        ),
-                        itinerary.status === 'active' && (
-                          <TouchableOpacity 
-                            style={styles.option}
-                            onPress={() => {
-                              setSelectedItineraryId(itinerary._id);
-                              handleCancelItinerary(itinerary._id);
-                            }}>
-                            <ThemedIcons name='minus-circle' size={18}/>
-                            <ThemedText style={{marginLeft: 10}}>Cancel Itinerary</ThemedText>
-                          </TouchableOpacity>
-                        ),
+                        <TouchableOpacity 
+                          style={styles.option}
+                          onPress={() => {
+                            setSelectedItineraryId(itinerary._id);
+                            handleMarkAsDone(itinerary._id);
+                          }}>
+                          <ThemedIcons name='check-circle' size={18}/>
+                          <ThemedText style={{marginLeft: 10}}>Mark as Done</ThemedText>
+                        </TouchableOpacity>
+                        ,
+                        <TouchableOpacity 
+                          style={styles.option}
+                          onPress={() => {
+                            setSelectedItineraryId(itinerary._id);
+                            handleCancelItinerary(itinerary._id);
+                          }}>
+                          <ThemedIcons name='minus-circle' size={18}/>
+                          <ThemedText style={{marginLeft: 10}}>Cancel Itinerary</ThemedText>
+                        </TouchableOpacity>
+                        ,
                         <TouchableOpacity 
                           style={styles.option}
                           onPress={() => {
@@ -276,6 +283,12 @@ export default function ItinerariesScreen() {
         iconName="plus"
         onPress={() => router.push('/itineraries/itineraries-create')}
         style={styles.addButton}
+      />
+
+      <ShareModal
+        visible={showShare}
+        link={shareLink}
+        onClose={() => setShowShare(false)}
       />
     </ThemedView>
   );

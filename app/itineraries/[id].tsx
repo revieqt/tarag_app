@@ -20,6 +20,7 @@ import TextField from '@/components/TextField';
 import Button from '@/components/Button';
 import { LinearGradient } from 'expo-linear-gradient';
 import { formatDateToString } from '@/utils/formatDateToString';
+import ShareModal from '@/components/modals/ShareModal';
 import LocationDisplay from '@/components/LocationDisplay';
 import { ThemedView } from '@/components/ThemedView';
 import { useThemeColor } from '@/hooks/useThemeColor';
@@ -57,6 +58,7 @@ export default function ItineraryViewScreen() {
   const secondaryColor = useThemeColor({}, 'secondary');
   const [groupName, setGroupName] = useState('');
   const [creatingGroup, setCreatingGroup] = useState(false);
+  const [showShare, setShowShare] = useState(false);
 
   const getAllLocations = () => {
     if (!itinerary?.locations) return [];
@@ -368,6 +370,13 @@ export default function ItineraryViewScreen() {
                 <ThemedIcons name="account-group" size={20}/>
                 <ThemedText>Create a Group with Itinerary</ThemedText>
               </OptionsPopup>,
+              <TouchableOpacity 
+                style={styles.optionsChild}
+                onPress={() => setShowShare(true)}
+              >
+                <ThemedIcons name="share" size={20} />
+                <ThemedText>Share Itinerary</ThemedText>
+              </TouchableOpacity>,
               <TouchableOpacity style={styles.optionsChild} onPress={handleGoToUpdateForm}>
                 <ThemedIcons name="pencil" size={20} />
                 <ThemedText>Edit Itinerary</ThemedText>
@@ -522,6 +531,12 @@ export default function ItineraryViewScreen() {
         )
         )}
       </LinearGradient>
+
+      <ShareModal
+        visible={showShare}
+        link={itinerary ? `exp://tarag-v2.exp.app/itineraries/${itinerary._id}` : ''}
+        onClose={() => setShowShare(false)}
+      />
     </View>
   );
 }

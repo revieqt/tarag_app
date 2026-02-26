@@ -1,5 +1,4 @@
 import { BACKEND_URL } from '@/constants/Config';
-import { DeviceInfo } from '@/hooks/useDeviceInfo';
 import { getAccessToken } from '@/utils/getAccessToken';
 
 export interface Location {
@@ -53,10 +52,7 @@ export interface UpdateItineraryData {
 /**
  * View a single itinerary by ID
  */
-export const viewItinerary = async (
-  itineraryID: string,
-  device?: Partial<DeviceInfo>
-): Promise<Itinerary> => {
+export const viewItinerary = async (itineraryID: string): Promise<Itinerary> => {
   try {
     const token = await getAccessToken();
     
@@ -86,9 +82,7 @@ export const viewItinerary = async (
 /**
  * View all itineraries for the authenticated user
  */
-export const viewUserItineraries = async (
-  device?: Partial<DeviceInfo>
-): Promise<Itinerary[]> => {
+export const viewUserItineraries = async (): Promise<Itinerary[]> => {
   try {
     const token = await getAccessToken();
     
@@ -116,8 +110,7 @@ export const viewUserItineraries = async (
  * Create a new itinerary
  */
 export const createItinerary = async (
-  itineraryData: CreateItineraryData,
-  device?: Partial<DeviceInfo>
+  itineraryData: CreateItineraryData
 ): Promise<Itinerary> => {
   try {
     const token = await getAccessToken();
@@ -148,8 +141,7 @@ export const createItinerary = async (
  */
 export const updateItinerary = async (
   itineraryID: string,
-  updateData: UpdateItineraryData,
-  device?: Partial<DeviceInfo>
+  updateData: UpdateItineraryData
 ): Promise<Itinerary> => {
   try {
     const token = await getAccessToken();
@@ -178,10 +170,7 @@ export const updateItinerary = async (
 /**
  * Delete an itinerary
  */
-export const deleteItinerary = async (
-  itineraryID: string,
-  device?: Partial<DeviceInfo>
-): Promise<Itinerary> => {
+export const deleteItinerary = async (itineraryID: string): Promise<Itinerary> => {
   try {
     const token = await getAccessToken();
     
@@ -208,10 +197,7 @@ export const deleteItinerary = async (
 /**
  * Cancel an itinerary
  */
-export const cancelItinerary = async (
-  itineraryID: string,
-  device?: Partial<DeviceInfo>
-): Promise<Itinerary> => {
+export const cancelItinerary = async (itineraryID: string): Promise<Itinerary> => {
   try {
     const token = await getAccessToken();
     
@@ -238,10 +224,7 @@ export const cancelItinerary = async (
 /**
  * Mark an itinerary as done
  */
-export const markItineraryAsDone = async (
-  itineraryID: string,
-  device?: Partial<DeviceInfo>
-): Promise<Itinerary> => {
+export const markItineraryAsDone = async (itineraryID: string): Promise<Itinerary> => {
   try {
     const token = await getAccessToken();
     
