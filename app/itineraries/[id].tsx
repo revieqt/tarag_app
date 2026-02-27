@@ -287,7 +287,7 @@ export default function ItineraryViewScreen() {
       return;
     }
     router.push({
-      pathname: '/itineraries/itineraries-update',
+      pathname: '/itineraries/itineraries-form',
       params: { itineraryData: JSON.stringify(itinerary) }
     });
   };
@@ -307,7 +307,7 @@ export default function ItineraryViewScreen() {
     };
     
     router.push({
-      pathname: '/itineraries/itineraries-update',
+      pathname: '/itineraries/itineraries-form',
       params: { itineraryData: JSON.stringify(itineraryToRepeat) }
     });
   };
@@ -362,7 +362,8 @@ export default function ItineraryViewScreen() {
               options={[
                 <OptionsPopup
                   key="createGroupTrip"
-                  style={styles.createGroupTrip}
+                  style={[styles.createGroupTrip, { opacity: 0.5 }]}
+                  disabled
                   options={[
                     <View key="header">
                       <ThemedText type='subtitle'>Create Group Trip</ThemedText>

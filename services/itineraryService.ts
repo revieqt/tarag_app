@@ -169,6 +169,37 @@ export const updateItinerary = async (
 };
 
 /**
+ * Repeat an itinerary (update with new dates and set status to 'active')
+ */
+export const repeatItinerary = async (
+  itineraryID: string,
+  updateData: UpdateItineraryData
+): Promise<Itinerary> => {
+  try {
+    const token = await getAccessToken();
+    
+    const response = await fetch(`${BACKEND_URL}/api/itineraries/repeat/${itineraryID}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(updateData),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to repeat itinerary');
+    }
+
+    const data = await response.json();
+    return data.data;
+  } catch (error: any) {
+    throw new Error(error.message || 'Failed to repeat itinerary');
+  }
+};
+
+/**
  * Delete an itinerary
  */
 export const deleteItinerary = async (itineraryID: string): Promise<Itinerary> => {

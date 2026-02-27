@@ -7,7 +7,7 @@ import TextField from '@/components/TextField';
 import ThemedIcons from '@/components/ThemedIcons';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import { useCreateItinerary } from '@/hooks/useItinerary';
+import { useCreateItinerary, useUpdateItinerary, useRepeatItinerary } from '@/hooks/useItinerary';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Alert,  KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
@@ -32,7 +32,6 @@ interface DailyLocation {
   locations: LocationItem[];
 }
 
-// Helper to generate days between two dates (inclusive)
 function getDatesBetween(start: Date, end: Date): Date[] {
   const dates = [];
   let current = new Date(start);
@@ -53,7 +52,15 @@ export default function CreateItineraryScreen() {
   const params = useLocalSearchParams();
   const { latitude, longitude, loading: locationLoading } = useLocation();
   const createItineraryMutation = useCreateItinerary();
+  const updateItineraryMutation = useUpdateItinerary();
+  const repeatItineraryMutation = useRepeatItinerary();
   const [descriptionHeight, setDescriptionHeight] = useState(60);
+
+  // State for edit mode
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [itineraryId, setItineraryId] = useState<string | null>(null);
+  const [isRepeatMode, setIsRepeatMode] = useState(false);
+  const [isEditingLocation, setIsEditingLocation] = useState(false);
 
   // State
   const [title, setTitle] = useState('');
@@ -67,13 +74,55 @@ export default function CreateItineraryScreen() {
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [currentDayIdx, setCurrentDayIdx] = useState<number | null>(null);
   const [editingLocationIdx, setEditingLocationIdx] = useState<number | null>(null);
-  const [isEditMode, setIsEditMode] = useState(false);
   const [modalLocationName, setModalLocationName] = useState('');
   const [modalNote, setModalNote] = useState('');
   const [modalLocationData, setModalLocationData] = useState<Partial<LocationItem>>({});
   const [mapRegion, setMapRegion] = useState<Region | null>(null);
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
+
+  // Check if this is edit mode on mount
+  useEffect(() => {
+    if (params.itineraryData && typeof params.itineraryData === 'string') {
+      try {
+        const itineraryData = JSON.parse(params.itineraryData);
+        setItineraryId(itineraryData._id || null);
+        setTitle(itineraryData.title || '');
+        setDescription(itineraryData.description || '');
+        setType(itineraryData.type || 'Solo');
+        setPlanDaily(itineraryData.planDaily || false);
+        
+        // Check if this is a repeat action (no startDate/endDate means repeat)
+        const isRepeat = !itineraryData.startDate && !itineraryData.endDate;
+        setIsRepeatMode(isRepeat);
+        setIsEditMode(!isRepeat); // Only edit mode if not repeat
+        
+        if (itineraryData.startDate) {
+          setStartDate(new Date(itineraryData.startDate));
+        }
+        if (itineraryData.endDate) {
+          setEndDate(new Date(itineraryData.endDate));
+        }
+
+        // Handle locations
+        if (itineraryData.planDaily && itineraryData.locations) {
+          // Convert to DailyLocation format
+          const dailyLocs = itineraryData.locations.map((item: any) => ({
+            date: item.date ? new Date(item.date) : null,
+            locations: item.locations || []
+          }));
+          setDailyLocations(dailyLocs);
+        } else if (itineraryData.locations && Array.isArray(itineraryData.locations)) {
+          setLocations(itineraryData.locations);
+        }
+      } catch (error) {
+        console.error('Error parsing itinerary data:', error);
+        // If parse fails, treat as create mode
+        setIsEditMode(false);
+        setIsRepeatMode(false);
+      }
+    }
+  }, [params.itineraryData]);
 
   // For daily plan, auto-generate days from startDate to endDate
   let autoDailyLocations: DailyLocation[] = dailyLocations;
@@ -88,15 +137,15 @@ export default function CreateItineraryScreen() {
   // Calculate number of days between startDate and endDate
   const numDays = startDate && endDate ? getNumDays(startDate, endDate) : 0;
 
-  // Set initial startDate from URL parameter
+  // Set initial startDate from URL parameter (only if not in edit mode)
   useEffect(() => {
-    if (params.startDate && typeof params.startDate === 'string') {
+    if (!isEditMode && params.startDate && typeof params.startDate === 'string') {
       const initialDate = new Date(params.startDate);
       if (!isNaN(initialDate.getTime())) {
         setStartDate(initialDate);
       }
     }
-  }, [params.startDate]);
+  }, [params.startDate, isEditMode]);
 
   // If only 1 day, force planDaily to false
   useEffect(() => {
@@ -113,6 +162,24 @@ export default function CreateItineraryScreen() {
       }, 1500);
     }
   }, [createItineraryMutation.isSuccess, router]);
+
+  // Handle update mutation success
+  useEffect(() => {
+    if (updateItineraryMutation.isSuccess) {
+      setTimeout(() => {
+        router.replace(`/itineraries/${updateItineraryMutation.data._id}`);
+      }, 1500);
+    }
+  }, [updateItineraryMutation.isSuccess, router]);
+
+  // Handle repeat mutation success
+  useEffect(() => {
+    if (repeatItineraryMutation.isSuccess) {
+      setTimeout(() => {
+        router.replace(`/itineraries/${repeatItineraryMutation.data._id}`);
+      }, 1500);
+    }
+  }, [repeatItineraryMutation.isSuccess, router]);
 
   // Add a location to a day
   const addLocationToDay = (dayIdx: number, loc: LocationItem) => {
@@ -181,9 +248,24 @@ export default function CreateItineraryScreen() {
     };
 
     try {
-      await createItineraryMutation.mutateAsync(itineraryData);
+      if (isRepeatMode && itineraryId) {
+        // Repeat mode - use repeat endpoint
+        await repeatItineraryMutation.mutateAsync({
+          itineraryID: itineraryId,
+          updateData: itineraryData as any,
+        });
+      } else if (isEditMode && itineraryId) {
+        // Update mode
+        await updateItineraryMutation.mutateAsync({
+          itineraryID: itineraryId,
+          updateData: itineraryData as any,
+        });
+      } else {
+        // Create mode
+        await createItineraryMutation.mutateAsync(itineraryData as any);
+      }
     } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : 'Failed to create itinerary';
+      const errorMsg = error instanceof Error ? error.message : `Failed to ${isRepeatMode ? 'repeat' : isEditMode ? 'update' : 'create'} itinerary`;
       setErrorMessage(errorMsg);
     }
   };
@@ -241,7 +323,7 @@ export default function CreateItineraryScreen() {
   const openLocationModal = (dayIdx: number | null) => {
     setCurrentDayIdx(dayIdx);
     setEditingLocationIdx(null);
-    setIsEditMode(false);
+    setIsEditingLocation(false);
     setModalLocationName('');
     setModalNote('');
     setModalLocationData({});
@@ -268,7 +350,7 @@ export default function CreateItineraryScreen() {
   const openEditLocationModal = (dayIdx: number | null, locIdx: number, location: LocationItem) => {
     setCurrentDayIdx(dayIdx);
     setEditingLocationIdx(locIdx);
-    setIsEditMode(true);
+    setIsEditingLocation(true);
     setModalLocationName(location.locationName || '');
     setModalNote(location.note || '');
     setModalLocationData(location);
@@ -288,7 +370,7 @@ export default function CreateItineraryScreen() {
     setShowLocationModal(false);
     setCurrentDayIdx(null);
     setEditingLocationIdx(null);
-    setIsEditMode(false);
+    setIsEditingLocation(false);
     setModalLocationName('');
     setModalNote('');
     setModalLocationData({});
@@ -302,7 +384,7 @@ export default function CreateItineraryScreen() {
         note: modalNote || '' 
       } as LocationItem;
 
-      if (isEditMode && editingLocationIdx !== null) {
+      if (isEditingLocation && editingLocationIdx !== null) {
         // Edit existing location
         if (planDaily && currentDayIdx !== null) {
           const dayDate = autoDailyLocations[currentDayIdx]?.date;
@@ -363,7 +445,7 @@ export default function CreateItineraryScreen() {
                   placeholder="Start Date"
                   value={startDate}
                   onChange={setStartDate}
-                  minimumDate={new Date()}
+                  minimumDate={isEditMode ? undefined : new Date()}
                   maximumDate={endDate || undefined}
                   style={{flex: 2, backgroundColor: 'transparent'}}
                 />
@@ -371,7 +453,7 @@ export default function CreateItineraryScreen() {
                   placeholder="End Date"
                   value={endDate}
                   onChange={setEndDate}
-                  minimumDate={startDate || new Date()}
+                  minimumDate={startDate || (isEditMode ? undefined : new Date())}
                   style={{flex: 2, backgroundColor: 'transparent'}}
                 />
               </View>
@@ -461,9 +543,17 @@ export default function CreateItineraryScreen() {
         </ScrollView>
       </KeyboardAvoidingView>
       <ProcessModal
-        visible={createItineraryMutation.isPending || createItineraryMutation.isSuccess || !!errorMessage}
-        success={createItineraryMutation.isSuccess}
-        successMessage="Itinerary created successfully!"
+        visible={
+          createItineraryMutation.isPending ||
+          createItineraryMutation.isSuccess ||
+          updateItineraryMutation.isPending ||
+          updateItineraryMutation.isSuccess ||
+          repeatItineraryMutation.isPending ||
+          repeatItineraryMutation.isSuccess ||
+          !!errorMessage
+        }
+        success={createItineraryMutation.isSuccess || updateItineraryMutation.isSuccess || repeatItineraryMutation.isSuccess}
+        successMessage={isRepeatMode ? "Itinerary repeated successfully!" : isEditMode ? "Itinerary updated successfully!" : "Itinerary created successfully!"}
         errorMessage={errorMessage}
       />
       <RoundedButton
@@ -471,8 +561,8 @@ export default function CreateItineraryScreen() {
         onPress={handleSubmit}
         style={{
           ...styles.cubeButton,
-          opacity: !title.trim() || !startDate || !endDate || createItineraryMutation.isPending ? 0.5 : 1,
-          pointerEvents: !title.trim() || !startDate || !endDate || createItineraryMutation.isPending ? 'none' : 'auto'
+          opacity: !title.trim() || !startDate || !endDate || createItineraryMutation.isPending || updateItineraryMutation.isPending || repeatItineraryMutation.isPending ? 0.5 : 1,
+          pointerEvents: !title.trim() || !startDate || !endDate || createItineraryMutation.isPending || updateItineraryMutation.isPending || repeatItineraryMutation.isPending ? 'none' : 'auto'
         }}
       />
 
@@ -535,7 +625,7 @@ export default function CreateItineraryScreen() {
                 
                 <View style={{width: '48%'}}>
                 <Button
-                    title={isEditMode ? "Update" : "Add"}
+                    title={isEditingLocation ? "Update" : "Add"}
                     type='primary'
                     onPress={handleAddLocationFromModal}
                     disabled={!modalLocationData.locationName || !modalLocationData.latitude || !modalLocationData.longitude}

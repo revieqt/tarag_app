@@ -53,6 +53,15 @@ const DatePicker: React.FC<DatePickerProps> = ({
   const [selectedMonth, setSelectedMonth] = useState<number | null>(null);
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
 
+  // Initialize state from value prop when component mounts or value changes
+  useEffect(() => {
+    if (value) {
+      setSelectedDay(value.getDate());
+      setSelectedMonth(value.getMonth());
+      setSelectedYear(value.getFullYear());
+    }
+  }, [value]);
+
   const minYear = minimumDate ? minimumDate.getFullYear() : 1950;
   const maxYear = maximumDate ? maximumDate.getFullYear() : new Date().getFullYear() + 50;
   const years = Array.from({ length: maxYear - minYear + 1 }, (_, i) => minYear + i);

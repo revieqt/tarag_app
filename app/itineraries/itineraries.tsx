@@ -38,6 +38,26 @@ export default function ItinerariesScreen() {
     router.push(`/itineraries/${itineraryId}`);
   };
 
+  const handleEditItinerary = (itinerary: any) => {
+    router.push({
+      pathname: '/itineraries/itineraries-form',
+      params: { itineraryData: JSON.stringify(itinerary) }
+    });
+  };
+
+  const handleRepeatItinerary = (itinerary: any) => {
+    const itineraryToRepeat = {
+      ...itinerary,
+      startDate: undefined,
+      endDate: undefined,
+      status: 'pending'
+    };
+    router.push({
+      pathname: '/itineraries/itineraries-form',
+      params: { itineraryData: JSON.stringify(itineraryToRepeat) }
+    });
+  };
+
   const handleDeleteItinerary = (itineraryId: string) => {
     Alert.alert(
       'Delete Itinerary',
@@ -162,7 +182,7 @@ export default function ItinerariesScreen() {
                           <ThemedIcons name='information' size={18}/>
                           <ThemedText style={{marginLeft: 10}}>View Itinerary</ThemedText>
                         </TouchableOpacity>,
-                        <TouchableOpacity style={[styles.option]} disabled>
+                        <TouchableOpacity style={[styles.option, { opacity: 0.5 }]} disabled>
                           <ThemedIcons name='account-group' size={18}/>
                           <ThemedText style={{marginLeft: 10}}>Create Group with Itinerary</ThemedText>
                         </TouchableOpacity>
@@ -175,8 +195,8 @@ export default function ItinerariesScreen() {
                           <ThemedText style={{marginLeft: 10}}>Share Itinerary</ThemedText>
                         </TouchableOpacity>,
                         <TouchableOpacity 
-                          disabled
-                          style={[styles.option]}>
+                          style={styles.option}
+                          onPress={() => handleEditItinerary(itinerary)}>
                           <ThemedIcons name='pencil' size={18}/>
                           <ThemedText style={{marginLeft: 10}}>Edit Itinerary</ThemedText>
                         </TouchableOpacity>,
@@ -226,10 +246,10 @@ export default function ItinerariesScreen() {
                           <ThemedText style={{marginLeft: 10}}>View Itinerary</ThemedText>
                         </TouchableOpacity>,
                         <TouchableOpacity 
-                          disabled
-                          style={[styles.option]}>
-                          <ThemedIcons name='pencil' size={18}/>
-                          <ThemedText style={{marginLeft: 10}}>Reuse Itinerary</ThemedText>
+                          style={styles.option}
+                          onPress={() => handleRepeatItinerary(itinerary)}>
+                          <ThemedIcons name='history' size={18}/>
+                          <ThemedText style={{marginLeft: 10}}>Repeat Itinerary</ThemedText>
                         </TouchableOpacity>,
                         <TouchableOpacity 
                           style={styles.option}
@@ -283,7 +303,7 @@ export default function ItinerariesScreen() {
 
       <RoundedButton
         iconName="plus"
-        onPress={() => router.push('/itineraries/itineraries-create')}
+        onPress={() => router.push('/itineraries/itineraries-form')}
         style={styles.addButton}
       />
 

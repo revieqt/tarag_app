@@ -4,6 +4,7 @@ import {
   viewUserItineraries as viewUserItinerariesService,
   createItinerary as createItineraryService,
   updateItinerary as updateItineraryService,
+  repeatItinerary as repeatItineraryService,
   deleteItinerary as deleteItineraryService,
   cancelItinerary as cancelItineraryService,
   markItineraryAsDone as markItineraryAsDoneService,
@@ -72,8 +73,17 @@ export function useUpdateItinerary() {
     mutationFn: async ({ itineraryID, updateData }: { itineraryID: string; updateData: UpdateItineraryData }) =>
       await updateItineraryService(itineraryID, updateData),
     onSuccess: (data) => {
-      // Update the specific itinerary in cache
-      queryClient.setQueryData(itineraryKeys.detail(data._id), data);
+      // Get the existing cached itinerary data to preserve fields like username
+      const existingData = queryClient.getQueryData<any>(itineraryKeys.detail(data._id));
+      
+      // Merge the old data with the new data, preserving fields not in the response
+      const mergedData = {
+        ...existingData,
+        ...data,
+      };
+      
+      // Update the specific itinerary in cache with merged data
+      queryClient.setQueryData(itineraryKeys.detail(data._id), mergedData);
       // Refetch the user itineraries list
       queryClient.invalidateQueries({ queryKey: itineraryKeys.list() });
     },
@@ -93,6 +103,33 @@ export function useDeleteItinerary() {
       if (data && data._id) {
         queryClient.removeQueries({ queryKey: itineraryKeys.detail(data._id) });
       }
+      // Refetch the user itineraries list
+      queryClient.invalidateQueries({ queryKey: itineraryKeys.list() });
+    },
+  });
+}
+
+/**
+ * Hook to repeat an itinerary (update with new dates and set status to 'active')
+ */
+export function useRepeatItinerary() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ itineraryID, updateData }: { itineraryID: string; updateData: UpdateItineraryData }) =>
+      await repeatItineraryService(itineraryID, updateData),
+    onSuccess: (data) => {
+      // Get the existing cached itinerary data to preserve fields like username
+      const existingData = queryClient.getQueryData<any>(itineraryKeys.detail(data._id));
+      
+      // Merge the old data with the new data, preserving fields not in the response
+      const mergedData = {
+        ...existingData,
+        ...data,
+      };
+      
+      // Update the specific itinerary in cache with merged data
+      queryClient.setQueryData(itineraryKeys.detail(data._id), mergedData);
       // Refetch the user itineraries list
       queryClient.invalidateQueries({ queryKey: itineraryKeys.list() });
     },

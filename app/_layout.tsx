@@ -128,7 +128,7 @@ function AppContent() {
           <Stack.Screen name="routes/routes" />
           <Stack.Screen name="routes/routes-create" />
           <Stack.Screen name="itineraries/itineraries" />
-          <Stack.Screen name="itineraries/itineraries-create" />
+          <Stack.Screen name="itineraries/itineraries-form" />
           <Stack.Screen name="itineraries/[id]" />
           <Stack.Screen name="safety/safety" />
           <Stack.Screen name="qr/qr-scan" />
