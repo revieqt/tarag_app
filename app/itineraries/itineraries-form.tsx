@@ -1,8 +1,7 @@
 import Button from '@/components/Button';
 import DatePicker from '@/components/DatePicker';
 import DropDownField from '@/components/DropDownField';
-import LocationAutocomplete, { LocationItem } from '@/components/LocationAutocomplete';
-// import LocationDisplay from '@/components/LocationDisplay';
+import { LocationItem } from '@/components/LocationAutocomplete';
 import TextField from '@/components/TextField';
 import ThemedIcons from '@/components/ThemedIcons';
 import { ThemedText } from '@/components/ThemedText';
@@ -10,15 +9,13 @@ import { ThemedView } from '@/components/ThemedView';
 import { useCreateItinerary, useUpdateItinerary, useRepeatItinerary } from '@/hooks/useItinerary';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { Alert,  KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
-import MapView, { PROVIDER_DEFAULT, Region } from 'react-native-maps';
+import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useLocation } from '@/hooks/useLocation';
-import CubeButton from '@/components/RoundedButton'
 import Switch from '@/components/Switch';
 import BackButton from '@/components/BackButton';
 import ProcessModal from '@/components/modals/ProcessModal';
+import LocationPickerModal from '@/components/modals/LocationPickerModal';
 import RoundedButton from '@/components/RoundedButton';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 const ITINERARY_TYPES = [
   { label: 'Solo', value: 'Solo' },
@@ -74,11 +71,6 @@ export default function CreateItineraryScreen() {
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [currentDayIdx, setCurrentDayIdx] = useState<number | null>(null);
   const [editingLocationIdx, setEditingLocationIdx] = useState<number | null>(null);
-  const [modalLocationName, setModalLocationName] = useState('');
-  const [modalNote, setModalNote] = useState('');
-  const [modalLocationData, setModalLocationData] = useState<Partial<LocationItem>>({});
-  const [mapRegion, setMapRegion] = useState<Region | null>(null);
-  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
 
   // Check if this is edit mode on mount
@@ -270,80 +262,13 @@ export default function CreateItineraryScreen() {
     }
   };
 
-  // Reverse geocode to get location name from coordinates
-  const reverseGeocode = async (lat: number, lng: number) => {
-    try {
-      setIsLoadingLocation(true);
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
-        {
-          headers: {
-            'User-Agent': 'TaraG/1.0'
-          }
-        }
-      );
-      const data = await response.json();
-      const locationName = data.display_name || `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
-      return locationName;
-    } catch (error) {
-      console.error('Error reverse geocoding:', error);
-      return `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
-    } finally {
-      setIsLoadingLocation(false);
-    }
-  };
 
-  // Handle map region change - update location data when user moves map
-  const handleMapRegionChangeComplete = async (region: Region) => {
-    const locationName = await reverseGeocode(region.latitude, region.longitude);
-    setModalLocationName(locationName);
-    setModalLocationData({
-      locationName,
-      latitude: region.latitude,
-      longitude: region.longitude,
-    });
-  };
-
-  // Handle location selection from autocomplete - update map to show selected location
-  const handleLocationSelect = (loc: LocationItem) => {
-    setModalLocationName(loc.locationName || '');
-    setModalLocationData(loc);
-    // Update map region to the selected location
-    if (loc.latitude && loc.longitude) {
-      setMapRegion({
-        latitude: loc.latitude,
-        longitude: loc.longitude,
-        latitudeDelta: 0.01,
-        longitudeDelta: 0.01,
-      });
-    }
-  };
 
   // Modal functions
   const openLocationModal = (dayIdx: number | null) => {
     setCurrentDayIdx(dayIdx);
     setEditingLocationIdx(null);
     setIsEditingLocation(false);
-    setModalLocationName('');
-    setModalNote('');
-    setModalLocationData({});
-    // Initialize map to current location or default
-    if (latitude && longitude) {
-      setMapRegion({
-        latitude,
-        longitude,
-        latitudeDelta: 0.01,
-        longitudeDelta: 0.01,
-      });
-    } else {
-      // Default to Cebu City
-      setMapRegion({
-        latitude: 10.3157,
-        longitude: 123.8854,
-        latitudeDelta: 0.01,
-        longitudeDelta: 0.01,
-      });
-    }
     setShowLocationModal(true);
   };
 
@@ -351,18 +276,6 @@ export default function CreateItineraryScreen() {
     setCurrentDayIdx(dayIdx);
     setEditingLocationIdx(locIdx);
     setIsEditingLocation(true);
-    setModalLocationName(location.locationName || '');
-    setModalNote(location.note || '');
-    setModalLocationData(location);
-    // Initialize map to the location being edited
-    if (location.latitude && location.longitude) {
-      setMapRegion({
-        latitude: location.latitude,
-        longitude: location.longitude,
-        latitudeDelta: 0.01,
-        longitudeDelta: 0.01,
-      });
-    }
     setShowLocationModal(true);
   };
 
@@ -371,46 +284,37 @@ export default function CreateItineraryScreen() {
     setCurrentDayIdx(null);
     setEditingLocationIdx(null);
     setIsEditingLocation(false);
-    setModalLocationName('');
-    setModalNote('');
-    setModalLocationData({});
-    setMapRegion(null);
   };
 
-  const handleAddLocationFromModal = () => {
-    if (modalLocationData && modalLocationData.locationName && modalLocationData.latitude && modalLocationData.longitude) {
-      const locationToAdd = { 
-        ...modalLocationData, 
-        note: modalNote || '' 
-      } as LocationItem;
+  const handleAddLocationFromModal = (location: LocationItem, note: string) => {
+    const locationToAdd = { ...location, note } as LocationItem;
 
-      if (isEditingLocation && editingLocationIdx !== null) {
-        // Edit existing location
-        if (planDaily && currentDayIdx !== null) {
-          const dayDate = autoDailyLocations[currentDayIdx]?.date;
-          if (dayDate) {
-            const updated = [...dailyLocations];
-            const idx = updated.findIndex(d => d.date && d.date.toDateString() === dayDate.toDateString());
-            if (idx !== -1) {
-              updated[idx].locations[editingLocationIdx] = locationToAdd;
-              setDailyLocations(updated);
-            }
+    if (isEditingLocation && editingLocationIdx !== null) {
+      // Edit existing location
+      if (planDaily && currentDayIdx !== null) {
+        const dayDate = autoDailyLocations[currentDayIdx]?.date;
+        if (dayDate) {
+          const updated = [...dailyLocations];
+          const idx = updated.findIndex(d => d.date && d.date.toDateString() === dayDate.toDateString());
+          if (idx !== -1) {
+            updated[idx].locations[editingLocationIdx] = locationToAdd;
+            setDailyLocations(updated);
           }
-        } else {
-          const updated = [...locations];
-          updated[editingLocationIdx] = locationToAdd;
-          setLocations(updated);
         }
       } else {
-        // Add new location
-        if (planDaily && currentDayIdx !== null) {
-          addLocationToDay(currentDayIdx, locationToAdd);
-        } else {
-          addLocation(locationToAdd);
-        }
+        const updated = [...locations];
+        updated[editingLocationIdx] = locationToAdd;
+        setLocations(updated);
       }
-      closeLocationModal();
+    } else {
+      // Add new location
+      if (planDaily && currentDayIdx !== null) {
+        addLocationToDay(currentDayIdx, locationToAdd);
+      } else {
+        addLocation(locationToAdd);
+      }
     }
+    closeLocationModal();
   };
 
   return (
@@ -566,78 +470,20 @@ export default function CreateItineraryScreen() {
         }}
       />
 
-      {/* Add Location Modal */}
-      <Modal
+      {/* Location Picker Modal */}
+      <LocationPickerModal
         visible={showLocationModal}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={closeLocationModal}
-      >
-        <SafeAreaView style={{flex:1}}>
-                <ThemedView style={{flex:1}}>
-            {/* Interactive Map */}
-            {mapRegion && (
-                <View style={styles.mapContainer}>
-                <MapView
-                    style={styles.map}
-                    provider={PROVIDER_DEFAULT}
-                    region={mapRegion}
-                    onRegionChangeComplete={handleMapRegionChangeComplete}
-                />
-                {/* Fixed center marker overlay */}
-                <View style={styles.centerMarkerContainer}>
-                    <View style={styles.centerMarker} />
-                </View>
-                {isLoadingLocation && (
-                    <View style={styles.loadingOverlay}>
-                    <ThemedText style={{fontSize: 12, opacity: 0.7}}>Getting location...</ThemedText>
-                    </View>
-                )}
-                <View style={styles.mapOverlay}/>
-                </View>
-            )}
-
-            <View style={{padding: 16, paddingTop: 0}}>
-                <ThemedText style={{fontSize: 12, opacity: 0.6, marginBottom: 8, marginTop: 12}}>
-                Move the map to select a location or search below:
-                </ThemedText>
-                
-                <LocationAutocomplete
-                value={modalLocationName}
-                onSelect={handleLocationSelect}
-                placeholder="Search for a location"
-                />
-                
-                <TextField
-                placeholder="Add a note (optional)"
-                value={modalNote}
-                onChangeText={setModalNote}
-                multiline
-                />
-
-                <View style={{ flexDirection: 'row', gap: 10, justifyContent: 'space-between'}}>
-                <View style={{width: '48%'}}>
-                    <Button
-                    title="Cancel"
-                    onPress={closeLocationModal}
-                />
-                </View>
-                
-                <View style={{width: '48%'}}>
-                <Button
-                    title={isEditingLocation ? "Update" : "Add"}
-                    type='primary'
-                    onPress={handleAddLocationFromModal}
-                    disabled={!modalLocationData.locationName || !modalLocationData.latitude || !modalLocationData.longitude}
-                />
-                </View>
-                </View>
-            </View>
-            
-            </ThemedView>
-        </SafeAreaView>
-        
-      </Modal>
+        onClose={closeLocationModal}
+        onAddLocation={handleAddLocationFromModal}
+        isEditingLocation={isEditingLocation}
+        initialLocation={
+          isEditingLocation && editingLocationIdx !== null
+            ? planDaily && currentDayIdx !== null
+              ? autoDailyLocations[currentDayIdx]?.locations[editingLocationIdx]
+              : locations[editingLocationIdx]
+            : undefined
+        }
+      />
     </ThemedView>
   );
 }
@@ -690,60 +536,5 @@ const styles = StyleSheet.create({
   locationContainer:{
     paddingHorizontal: 16,
   },
-  mapContainer: {
-    flex: 1,
-    overflow: 'hidden',
-    position: 'relative',
-  },
-  map: {
-    position: 'absolute',
-    top: 0,
-    bottom: 0,
-    left: 0,
-    right: 0,
-  },
-  mapOverlay:{
-    height: 20,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    zIndex: 100
-  },
-  loadingOverlay: {
-    position: 'absolute',
-    bottom: 10,
-    left: 0,
-    right: 0,
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    padding: 8,
-    borderRadius: 8,
-    marginHorizontal: 16,
-  },
-  centerMarkerContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
-    pointerEvents: 'none',
-  },
-  centerMarker: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: '#00CAFF',
-    borderWidth: 3,
-    borderColor: '#fff',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 3,
-    elevation: 5,
-  }
+
 });

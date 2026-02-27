@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { View, StyleSheet, Image } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -6,6 +6,7 @@ import { ThemedIcons } from '@/components/ThemedIcons';
 import { useLocation } from '@/hooks/useLocation';
 import LoadingContainerAnimation from './LoadingContainerAnimation';
 import { BACKEND_URL } from '@/constants/Config';
+import { useQuery } from '@tanstack/react-query';
 
 interface WeatherCardProps {
   city?: string;
@@ -23,8 +24,57 @@ interface WeatherData {
   weatherCode: number;
 }
 
-// Session-based cache for current location weather
-let currentLocationWeatherCache: { data: WeatherData | null; timestamp: number } | null = null;
+// Calculate milliseconds until midnight
+const getTimeUntilMidnight = (): number => {
+  const now = new Date();
+  const tomorrow = new Date(now);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  tomorrow.setHours(0, 0, 0, 0);
+  return Math.max(tomorrow.getTime() - now.getTime(), 0);
+};
+
+// Fetch weather from backend
+const fetchWeather = async (
+  latitude: number,
+  longitude: number,
+  city: string
+): Promise<WeatherData> => {
+  const queryParams = new URLSearchParams({
+    city,
+    latitude: latitude.toString(),
+    longitude: longitude.toString(),
+  });
+
+  const response = await fetch(`${BACKEND_URL}/api/weather?${queryParams}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch weather data');
+  }
+
+  const responseData = await response.json();
+  return responseData.data || responseData;
+};
+
+// Query hook for weather data
+const useWeather = (
+  latitude: number | undefined,
+  longitude: number | undefined,
+  city: string
+) => {
+  return useQuery<WeatherData>({
+    queryKey: ['weather', latitude, longitude],
+    queryFn: () => fetchWeather(latitude!, longitude!, city),
+    enabled: latitude !== undefined && longitude !== undefined,
+    staleTime: getTimeUntilMidnight(),
+    refetchInterval: getTimeUntilMidnight(),
+    gcTime: 24 * 60 * 60 * 1000, // Keep in cache for 24 hours
+  });
+};
 
 const getWeatherImage = (weatherCode: number): any => {
   if (weatherCode === 0) {
@@ -47,108 +97,33 @@ const getWeatherImage = (weatherCode: number): any => {
 
 export default function WeatherCard({ latitude, longitude, date, city }: WeatherCardProps) {
   const locationData = useLocation();
-  const [currentWeather, setCurrentWeather] = useState<WeatherData | null>(null);
-  const [currentLocationLoading, setCurrentLocationLoading] = useState(false);
-  
-  // State for props-based weather
-  const [propsWeather, setPropsWeather] = useState<WeatherData | null>(null);
-  const [propsLoading, setPropsLoading] = useState(false);
-  
-  // Error state
-  const [error, setError] = useState<string | null>(null);
 
   // Determine if we have location props
   const hasLocationProps = latitude !== undefined && longitude !== undefined && city !== undefined;
 
-  // Fetch weather from backend
-  const fetchWeather = async (
-    fetchLatitude: number,
-    fetchLongitude: number,
-    fetchCity: string,
-    isCurrentLocation: boolean
-  ) => {
-    try {
-      if (isCurrentLocation) {
-        setCurrentLocationLoading(true);
-      } else {
-        setPropsLoading(true);
-      }
-      setError(null);
+  // Query current location weather
+  const currentLocationQuery = useWeather(
+    locationData.latitude,
+    locationData.longitude,
+    locationData.city || locationData.suburb || locationData.region || locationData.state || 'Unknown'
+  );
 
-      const queryParams = new URLSearchParams({
-        city: fetchCity,
-        latitude: fetchLatitude.toString(),
-        longitude: fetchLongitude.toString(),
-      });
+  // Query props-based weather
+  const propsQuery = useWeather(latitude, longitude, city || '');
 
-      const response = await fetch(`${BACKEND_URL}/api/weather?${queryParams}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+  // Determine which query to use
+  const activeQuery = hasLocationProps ? propsQuery : currentLocationQuery;
+  const { data: displayWeather, isLoading, error } = activeQuery;
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch weather data');
-      }
+  // Determine display city
+  let displayCity = '';
+  if (hasLocationProps) {
+    displayCity = city || 'Unknown Location';
+  } else {
+    displayCity = locationData.city || locationData.suburb || locationData.region || locationData.state || 'Minglanilla';
+  }
 
-      const responseData = await response.json();
-      // Unwrap data if it's nested in a 'data' property
-      const weatherData: WeatherData = responseData.data || responseData;
-
-      if (isCurrentLocation) {
-        setCurrentWeather(weatherData);
-        // Update cache with timestamp
-        currentLocationWeatherCache = {
-          data: weatherData,
-          timestamp: Date.now(),
-        };
-      } else {
-        setPropsWeather(weatherData);
-      }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch weather';
-      setError(errorMessage);
-    } finally {
-      if (isCurrentLocation) {
-        setCurrentLocationLoading(false);
-      } else {
-        setPropsLoading(false);
-      }
-    }
-  };
-
-  // Effect: Fetch current location weather (with cache)
-  useEffect(() => {
-    
-    // Allow fetching if we have coordinates, city is optional
-    if (!locationData.loading && locationData.latitude !== undefined && locationData.longitude !== undefined) {
-      // Check if we have cached data for current location
-      if (currentLocationWeatherCache?.data) {
-        setCurrentWeather(currentLocationWeatherCache.data);
-      } else {
-        // Fetch if not cached
-        fetchWeather(
-          locationData.latitude,
-          locationData.longitude,
-          locationData.city || 'Unknown',
-          true
-        );
-      }
-    }
-  }, [locationData.city, locationData.latitude, locationData.longitude, locationData.loading]);
-
-  // Effect: Fetch props-based weather (separate from cache)
-  useEffect(() => {
-    if (hasLocationProps) {
-      fetchWeather(latitude, longitude, city, false);
-    }
-  }, [latitude, longitude, city, hasLocationProps]);
-
-  // Show loading state if still fetching
-  const isLoading = currentLocationLoading || propsLoading;
-  // Show loading only if we need location data and it's still loading
-  const showLoading = isLoading || (locationData.loading && !hasLocationProps && !currentWeather);
+  const showLoading = isLoading || (locationData.loading && !hasLocationProps && !displayWeather);
 
   if (showLoading) {
     return (
@@ -181,18 +156,6 @@ export default function WeatherCard({ latitude, longitude, date, city }: Weather
         </View>
       </ThemedView>
     );
-  }
-
-  // Determine which weather data to display
-  const displayWeather = hasLocationProps ? propsWeather : currentWeather;
-  // For current location, try to get the best location name from useLocation
-  let displayCity = '';
-  if (hasLocationProps) {
-    displayCity = city || 'Unknown Location';
-  } else {
-    // Try all available fields to find a location name
-    displayCity = locationData.city || locationData.suburb || locationData.region || locationData.state || '';
-    
   }
 
   return (
@@ -258,7 +221,7 @@ export default function WeatherCard({ latitude, longitude, date, city }: Weather
 
         {error && (
           <ThemedText style={{ opacity: 0.5, marginTop: 10, textAlign: 'center', fontSize: 12, color: '#ff6b6b' }}>
-            {error}
+            {error instanceof Error ? error.message : 'Failed to load weather data'}
           </ThemedText>
         )}
       </View>
