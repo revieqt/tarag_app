@@ -206,39 +206,58 @@ export default function ItineraryViewScreen() {
 
   // Handlers for actions
   const handleMarkAsCompleted = async () => {
-    if (!itinerary?._id) {
-      Alert.alert('Error', 'No itinerary available');
-      return;
-    }
-    
-    try {
-      await markItineraryAsDoneMutation.mutateAsync(itinerary._id);
-      Alert.alert('Success', 'Itinerary marked as completed.');
-      router.replace('/itineraries');
-    } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : 'Failed to mark as completed';
-      Alert.alert('Error', errorMsg);
-    }
+    if (!itinerary?._id) return;
+
+    Alert.alert(
+      'Mark as Done',
+      'Mark this itinerary as completed?',
+      [
+        { text: 'Cancel', onPress: () => null },
+        {
+          text: 'Done',
+          onPress: async () => {
+            try {
+              await markItineraryAsDoneMutation.mutateAsync(itinerary._id);
+              Alert.alert('Success', 'Itinerary marked as done');
+              router.replace('/itineraries/itineraries');
+            } catch (error) {
+              const errorMsg = error instanceof Error ? error.message : 'Failed to mark as done';
+              Alert.alert('Error', errorMsg);
+            }
+          },
+        },
+      ]
+    );
   };
 
   const handleCancel = async () => {
-    if (!itinerary?._id) {
-      Alert.alert('Error', 'No itinerary available');
-      return;
-    }
+    if (!itinerary?._id) return;
 
-    try {
-      await cancelItineraryMutation.mutateAsync(itinerary._id);
-      Alert.alert('Success', 'Itinerary cancelled.');
-      router.replace('/itineraries');
-    } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : 'Failed to cancel itinerary';
-      Alert.alert('Error', errorMsg);
-    }
+    Alert.alert(
+      'Cancel Itinerary',
+      'Are you sure you want to cancel this itinerary?',
+      [
+        { text: 'No', onPress: () => null },
+        {
+          text: 'Yes',
+          onPress: async () => {
+            try {
+              await cancelItineraryMutation.mutateAsync(itinerary._id);
+              Alert.alert('Success', 'Itinerary cancelled');
+            } catch (error) {
+              const errorMsg = error instanceof Error ? error.message : 'Failed to cancel itinerary';
+              Alert.alert('Error', errorMsg);
+            }
+          },
+          style: 'destructive',
+        },
+      ]
+    );
   };
 
   const handleDelete = async () => {
     if (!itinerary?._id) return;
+    
     Alert.alert(
       'Delete Itinerary',
       'Are you sure you want to delete this itinerary? Doing so will remove the itinerary permanently.',
@@ -250,8 +269,8 @@ export default function ItineraryViewScreen() {
           onPress: async () => {
             try {
               await deleteItineraryMutation.mutateAsync(itinerary._id);
-              Alert.alert('Deleted', 'Itinerary deleted.');
-              router.replace('/itineraries');
+              // Navigate away immediately - don't show another alert
+              router.replace('/itineraries/itineraries');
             } catch (err) {
               const errorMsg = err instanceof Error ? err.message : 'Failed to delete itinerary';
               Alert.alert('Error', errorMsg);
@@ -337,84 +356,87 @@ export default function ItineraryViewScreen() {
         colors={['#000', 'transparent']}
         style={styles.headerGradient}
       >
-        {showFirstOptions ? (
-          <OptionsPopup
-            options={[
-              <OptionsPopup
-                key="createGroupTrip"
-                style={styles.createGroupTrip}
-                options={[
-                  <View key="header">
-                    <ThemedText type='subtitle'>Create Group Trip</ThemedText>
-                    <ThemedText>Create a group with this itinerary and invite your friends</ThemedText>
-                  </View>,
-                  <View style={{flex: 1}} key="form">
-                    <TextField
-                      placeholder="Enter Group Name"
-                      value={groupName}
-                      onChangeText={setGroupName}
-                      onFocus={() => {}}
-                      onBlur={() => {}}
-                      isFocused={false}
-                      autoCapitalize="words"
-                    />
-                    <Button
-                      title={creatingGroup ? 'Creating...' : 'Create Group'}
-                      type='primary'
-                      onPress={handleCreateGroupWithItinerary}
-                      disabled={creatingGroup}
-                    />
-                  </View>
-                ]}
-              >
-                <ThemedIcons name="account-group" size={20}/>
-                <ThemedText>Create a Group with Itinerary</ThemedText>
-              </OptionsPopup>,
-              <TouchableOpacity 
-                style={styles.optionsChild}
-                onPress={() => setShowShare(true)}
-              >
-                <ThemedIcons name="share" size={20} />
-                <ThemedText>Share Itinerary</ThemedText>
-              </TouchableOpacity>,
-              <TouchableOpacity style={styles.optionsChild} onPress={handleGoToUpdateForm}>
-                <ThemedIcons name="pencil" size={20} />
-                <ThemedText>Edit Itinerary</ThemedText>
-              </TouchableOpacity>,
-              <TouchableOpacity style={styles.optionsChild} onPress={handleMarkAsCompleted}>
-                <ThemedIcons name="check-circle" size={20} />
-                <ThemedText>Mark as Done</ThemedText>
-              </TouchableOpacity>,
-              <TouchableOpacity style={styles.optionsChild} onPress={handleCancel}>
-                <ThemedIcons name="minus-circle" size={20} />
-                <ThemedText>Cancel Itinerary</ThemedText>
-              </TouchableOpacity>,
-              <TouchableOpacity style={styles.optionsChild} onPress={handleDelete}>
-                <ThemedIcons name="delete" size={20} />
-                <ThemedText>Delete Itinerary</ThemedText>
-              </TouchableOpacity>,
-            ]}
-            style={styles.options}
-          >
-            <ThemedIcons name="dots-vertical" size={20} color="#fff" />
-          </OptionsPopup>
-        ) : (
-          <OptionsPopup
-            options={[
-              <TouchableOpacity style={styles.optionsChild} onPress={handleRepeatItinerary}>
-                <ThemedIcons name="history" size={20} />
-                <ThemedText>Repeat Itinerary</ThemedText>
-              </TouchableOpacity>,
-              <TouchableOpacity style={styles.optionsChild} onPress={handleDelete}>
-                <ThemedIcons name="delete" size={20} />
-                <ThemedText>Delete Itinerary</ThemedText>
-              </TouchableOpacity>
-            ]}
-            style={styles.options}
-          >
-            <ThemedIcons name="dots-vertical" size={20} color="#fff" />
-          </OptionsPopup>
-        )}
+        {(itinerary?.userID && itinerary?.userID === session?.user?.id) && (
+          showFirstOptions ? (
+            <OptionsPopup
+              options={[
+                <OptionsPopup
+                  key="createGroupTrip"
+                  style={styles.createGroupTrip}
+                  options={[
+                    <View key="header">
+                      <ThemedText type='subtitle'>Create Group Trip</ThemedText>
+                      <ThemedText>Create a group with this itinerary and invite your friends</ThemedText>
+                    </View>,
+                    <View style={{flex: 1}} key="form">
+                      <TextField
+                        placeholder="Enter Group Name"
+                        value={groupName}
+                        onChangeText={setGroupName}
+                        onFocus={() => {}}
+                        onBlur={() => {}}
+                        isFocused={false}
+                        autoCapitalize="words"
+                      />
+                      <Button
+                        title={creatingGroup ? 'Creating...' : 'Create Group'}
+                        type='primary'
+                        onPress={handleCreateGroupWithItinerary}
+                        disabled={creatingGroup}
+                      />
+                    </View>
+                  ]}
+                >
+                  <ThemedIcons name="account-group" size={20}/>
+                  <ThemedText>Create a Group with Itinerary</ThemedText>
+                </OptionsPopup>,
+                <TouchableOpacity 
+                  style={styles.optionsChild}
+                  onPress={() => setShowShare(true)}
+                >
+                  <ThemedIcons name="share" size={20} />
+                  <ThemedText>Share Itinerary</ThemedText>
+                </TouchableOpacity>,
+                <TouchableOpacity style={styles.optionsChild} onPress={handleGoToUpdateForm}>
+                  <ThemedIcons name="pencil" size={20} />
+                  <ThemedText>Edit Itinerary</ThemedText>
+                </TouchableOpacity>,
+                <TouchableOpacity style={styles.optionsChild} onPress={handleMarkAsCompleted}>
+                  <ThemedIcons name="check-circle" size={20} />
+                  <ThemedText>Mark as Done</ThemedText>
+                </TouchableOpacity>,
+                <TouchableOpacity style={styles.optionsChild} onPress={handleCancel}>
+                  <ThemedIcons name="minus-circle" size={20} />
+                  <ThemedText>Cancel Itinerary</ThemedText>
+                </TouchableOpacity>,
+                <TouchableOpacity style={styles.optionsChild} onPress={handleDelete}>
+                  <ThemedIcons name="delete" size={20} />
+                  <ThemedText>Delete Itinerary</ThemedText>
+                </TouchableOpacity>,
+              ]}
+              style={styles.options}
+            >
+              <ThemedIcons name="dots-vertical" size={20} color="#fff" />
+            </OptionsPopup>
+          ) : (
+            <OptionsPopup
+              options={[
+                <TouchableOpacity style={styles.optionsChild} onPress={handleRepeatItinerary}>
+                  <ThemedIcons name="history" size={20} />
+                  <ThemedText>Repeat Itinerary</ThemedText>
+                </TouchableOpacity>,
+                <TouchableOpacity style={styles.optionsChild} onPress={handleDelete}>
+                  <ThemedIcons name="delete" size={20} />
+                  <ThemedText>Delete Itinerary</ThemedText>
+                </TouchableOpacity>
+              ]}
+              style={styles.options}
+            >
+              <ThemedIcons name="dots-vertical" size={20} color="#fff" />
+            </OptionsPopup>
+          ))
+        }
+        
 
         <BackButton type="close-floating" color="#fff"/>
         <ThemedText type='subtitle' style={{ color: '#fff'}}>

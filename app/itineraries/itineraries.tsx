@@ -48,11 +48,13 @@ export default function ItinerariesScreen() {
           text: 'Delete',
           onPress: async () => {
             try {
+              setSelectedItineraryId(null);
               await deleteItineraryMutation.mutateAsync(itineraryId);
-              Alert.alert('Success', 'Itinerary deleted successfully');
+              // Mutation will automatically refetch the list via invalidateQueries
             } catch (error) {
               const errorMsg = error instanceof Error ? error.message : 'Failed to delete itinerary';
               Alert.alert('Error', errorMsg);
+              setSelectedItineraryId(null);
             }
           },
           style: 'destructive',

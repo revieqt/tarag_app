@@ -90,7 +90,9 @@ export function useDeleteItinerary() {
     mutationFn: async (itineraryID: string) => await deleteItineraryService(itineraryID),
     onSuccess: (data) => {
       // Remove the deleted itinerary from cache
-      queryClient.removeQueries({ queryKey: itineraryKeys.detail(data._id) });
+      if (data && data._id) {
+        queryClient.removeQueries({ queryKey: itineraryKeys.detail(data._id) });
+      }
       // Refetch the user itineraries list
       queryClient.invalidateQueries({ queryKey: itineraryKeys.list() });
     },

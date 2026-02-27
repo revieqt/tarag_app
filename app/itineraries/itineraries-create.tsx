@@ -109,7 +109,7 @@ export default function CreateItineraryScreen() {
   useEffect(() => {
     if (createItineraryMutation.isSuccess) {
       setTimeout(() => {
-        router.replace('/itineraries');
+        router.replace(`/itineraries/${createItineraryMutation.data._id}`);
       }, 1500);
     }
   }, [createItineraryMutation.isSuccess, router]);
