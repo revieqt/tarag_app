@@ -8,8 +8,8 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { useCreateItinerary, useUpdateItinerary, useRepeatItinerary } from '@/hooks/useItinerary';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import React, { useEffect, useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import React, { useEffect, useState, useRef } from 'react';
+import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TouchableOpacity, View, PanResponder, Animated } from 'react-native';
 import { useLocation } from '@/hooks/useLocation';
 import Switch from '@/components/Switch';
 import BackButton from '@/components/BackButton';
@@ -72,6 +72,12 @@ export default function CreateItineraryScreen() {
   const [currentDayIdx, setCurrentDayIdx] = useState<number | null>(null);
   const [editingLocationIdx, setEditingLocationIdx] = useState<number | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
+  
+  // Drag and drop state
+  const [draggedLocationKey, setDraggedLocationKey] = useState<string | null>(null);
+  const [draggedItem, setDraggedItem] = useState<{ dayIdx: number | null; locIdx: number } | null>(null);
+  const dragY = useRef(new Animated.Value(0)).current;
+  const locationHeights = useRef<{ [key: string]: number }>({}).current;
 
   // Check if this is edit mode on mount
   useEffect(() => {
@@ -206,6 +212,79 @@ export default function CreateItineraryScreen() {
       updated.splice(locIdx, 1);
       setLocations(updated);
     }
+  };
+
+  // Generate unique key for location tracking
+  const getLocationKey = (dayIdx: number | null, locIdx: number): string => {
+    return `${dayIdx}-${locIdx}`;
+  };
+
+  // Parse location key
+  const parseLocationKey = (key: string): { dayIdx: number | null; locIdx: number } => {
+    const parts = key.split('-');
+    const dayIdx = parts[0] === 'null' ? null : parseInt(parts[0]);
+    const locIdx = parseInt(parts[1]);
+    return { dayIdx, locIdx };
+  };
+
+  // Handle drag start
+  const handleDragStart = (dayIdx: number | null, locIdx: number) => {
+    setDraggedLocationKey(getLocationKey(dayIdx, locIdx));
+    setDraggedItem({ dayIdx, locIdx });
+    dragY.setValue(0);
+  };
+
+  // Handle drag end
+  const handleDragEnd = () => {
+    setDraggedLocationKey(null);
+    setDraggedItem(null);
+    dragY.setValue(0);
+  };
+
+  // Swap locations based on drag
+  const swapLocations = (dayIdx: number | null, fromIdx: number, toIdx: number) => {
+    if (toIdx === fromIdx) return;
+
+    if (planDaily && dayIdx !== null) {
+      const updated = [...dailyLocations];
+      const locs = updated[dayIdx].locations;
+      [locs[fromIdx], locs[toIdx]] = [locs[toIdx], locs[fromIdx]];
+      setDailyLocations(updated);
+    } else {
+      const updated = [...locations];
+      [updated[fromIdx], updated[toIdx]] = [updated[toIdx], updated[fromIdx]];
+      setLocations(updated);
+    }
+  };
+
+  // Create pan responder for location dragging
+  const createLocationResponder = (dayIdx: number | null, locIdx: number, totalLocations: number) => {
+    return PanResponder.create({
+      onStartShouldSetPanResponder: () => false,
+      onMoveShouldSetPanResponder: () => draggedLocationKey === getLocationKey(dayIdx, locIdx),
+      onPanResponderMove: (evt, gestureState) => {
+        if (draggedLocationKey === getLocationKey(dayIdx, locIdx)) {
+          dragY.setValue(gestureState.dy);
+          const threshold = 40; // Distance threshold to trigger swap
+          
+          // Determine which direction and if we should swap
+          if (Math.abs(gestureState.dy) > threshold) {
+            if (gestureState.dy > threshold && locIdx < totalLocations - 1) {
+              // Dragging down
+              swapLocations(dayIdx, locIdx, locIdx + 1);
+              handleDragStart(dayIdx, locIdx + 1);
+            } else if (gestureState.dy < -threshold && locIdx > 0) {
+              // Dragging up
+              swapLocations(dayIdx, locIdx, locIdx - 1);
+              handleDragStart(dayIdx, locIdx - 1);
+            }
+          }
+        }
+      },
+      onPanResponderRelease: () => {
+        handleDragEnd();
+      },
+    });
   };
 
   // Submit handler
@@ -394,22 +473,37 @@ export default function CreateItineraryScreen() {
                         <ThemedText style={{color: '#00CAFF', fontSize: 12}}>Add Location</ThemedText>
                       </TouchableOpacity>
                     </View>
-                    {day.locations.map((loc, locIdx) => (
-                        <View key={locIdx} style={styles.locationRow}>
+                    {day.locations.map((loc, locIdx) => {
+                      const locationKey = getLocationKey(dayIdx, locIdx);
+                      const isDragged = draggedLocationKey === locationKey;
+                      const responder = createLocationResponder(dayIdx, locIdx, day.locations.length);
+                      
+                      return (
+                        <Animated.View 
+                          key={locIdx} 
+                          style={[
+                            styles.locationRow, 
+                            isDragged && {backgroundColor: '#00CAFF30', borderRadius: 8, padding: 8},
+                            {transform: isDragged ? [{translateY: dragY}] : [{translateY: 0}]}
+                          ]}
+                          {...responder.panHandlers}
+                        >
                             <TouchableOpacity 
                             style={{ flex: 1, marginBottom: 10 }}
                             onPress={() => openEditLocationModal(dayIdx, locIdx, loc)}
+                            onLongPress={() => handleDragStart(dayIdx, locIdx)}
                             >
-                            <ThemedText>{loc.locationName}</ThemedText>
+                            <ThemedText style={{opacity: isDragged ? 1 : 0.9}}>{loc.locationName}</ThemedText>
                             {loc.note ? (
-                                <ThemedText style={{opacity: .5}}>{loc.note}</ThemedText>
+                                <ThemedText style={{opacity: isDragged ? 0.7 : .5}}>{loc.note}</ThemedText>
                             ) : null}
                             </TouchableOpacity>
                             <TouchableOpacity onPress={() => removeLocation(dayIdx, locIdx)}>
-                            <ThemedIcons name='close' size={20}/>
+                              <ThemedIcons name='close' size={20}/>
                             </TouchableOpacity>
-                        </View>
-                        ))}
+                        </Animated.View>
+                      );
+                    })}
                   </View>
                 ))}
               </>
@@ -423,22 +517,37 @@ export default function CreateItineraryScreen() {
                   </TouchableOpacity>
                 </View>
                 <View style={{marginTop: 16}}>
-                    {locations.map((loc, idx) => (
-                      <View key={idx} style={styles.locationRow}>
-                        <TouchableOpacity 
-                          style={{ flex: 1, marginBottom: 15 }}
-                          onPress={() => openEditLocationModal(null, idx, loc)}
+                    {locations.map((loc, idx) => {
+                      const locationKey = getLocationKey(null, idx);
+                      const isDragged = draggedLocationKey === locationKey;
+                      const responder = createLocationResponder(null, idx, locations.length);
+                      
+                      return (
+                        <Animated.View 
+                          key={idx} 
+                          style={[
+                            styles.locationRow, 
+                            isDragged && {backgroundColor: '#00CAFF30', borderRadius: 8, padding: 8},
+                            {transform: isDragged ? [{translateY: dragY}] : [{translateY: 0}]}
+                          ]}
+                          {...responder.panHandlers}
                         >
-                          <ThemedText>{loc.locationName}</ThemedText>
-                          {loc.note ? (
-                            <ThemedText style={{opacity: .5}}>{loc.note}</ThemedText>
-                          ) : null}
-                        </TouchableOpacity>
-                        <TouchableOpacity onPress={() => removeLocation(null, idx)}>
-                          <ThemedIcons name='close' size={20}/>
-                        </TouchableOpacity>
-                      </View>
-                    ))}
+                          <TouchableOpacity 
+                            style={{ flex: 1, marginBottom: 15 }}
+                            onPress={() => openEditLocationModal(null, idx, loc)}
+                            onLongPress={() => handleDragStart(null, idx)}
+                          >
+                            <ThemedText style={{opacity: isDragged ? 1 : 0.9}}>{loc.locationName}</ThemedText>
+                            {loc.note ? (
+                              <ThemedText style={{opacity: isDragged ? 0.7 : .5}}>{loc.note}</ThemedText>
+                            ) : null}
+                          </TouchableOpacity>
+                          <TouchableOpacity onPress={() => removeLocation(null, idx)}>
+                            <ThemedIcons name='close' size={20}/>
+                          </TouchableOpacity>
+                        </Animated.View>
+                      );
+                    })}
                 </View>
                 
               </>

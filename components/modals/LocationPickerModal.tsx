@@ -207,25 +207,6 @@ export default function LocationPickerModal({
 
           </LinearGradient>
 
-          {/* <View style={styles.bottomButtonContainer}>
-            {step === 2 ? (<>
-                <RoundedButton
-                    iconName="plus"
-                    onPress={handleBackStep}
-                    style={styles.backButton}
-                />
-                <RoundedButton
-                    iconName="check"
-                    onPress={handleAddLocation}
-                />
-            </>):(<>
-                <ThemedText style={{ fontSize: 12, opacity: 0.7 }}>{isLoadingLocation ? 'Getting location...' : ''}</ThemedText>
-                <RoundedButton
-                    iconName="arrow-right"
-                    onPress={handleNextStep}
-                />
-            </>)}
-        </View> */}
         <LinearGradient
             colors={['transparent', '#000']}
             style={styles.bottomButtonContainer}

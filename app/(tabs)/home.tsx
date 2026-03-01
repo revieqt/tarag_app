@@ -197,7 +197,7 @@ export default function HomeScreen() {
             <ThemedText style={styles.menuOptionText}>Safety</ThemedText>
           </TouchableOpacity>
 
-          <TouchableOpacity style={[styles.menuOptions, !isConnected && {opacity:.5},{backgroundColor: secondaryColor}]} onPress={() => router.push('/translate/translate')}
+          <TouchableOpacity style={[styles.menuOptions, !isConnected && {opacity:.5},{backgroundColor: secondaryColor}]} onPress={() => router.push('/qr/qr-scan')}
             disabled={!isConnected}>
             <ThemedIcons name="qrcode-scan" size={25} color='#fff'/>
             <ThemedText style={styles.menuOptionText}>Scan</ThemedText>
