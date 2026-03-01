@@ -7,6 +7,7 @@ import { useRoute } from '@/context/RouteContext';
 import ActiveRouteSidebarButton from './ActiveRouteSidebarButton';
 import SOSSidebarButton from './SOSSidebarButton';
 import { router } from 'expo-router';
+import QRButton from './QRButton';
 
 const SidebarAlerts: React.FC = () => {
   const [hideAlert, setHideAlert] = useState(false);
@@ -198,6 +199,7 @@ const SidebarAlerts: React.FC = () => {
     >
         {activeRoute && <ActiveRouteSidebarButton />}
         {session?.user?.safetyState?.isInAnEmergency &&<SOSSidebarButton />}
+        <QRButton />
     </Animated.View>
 
     <Animated.View

@@ -6,6 +6,7 @@ import { StyleSheet, ScrollView, TouchableOpacity, View, ActivityIndicator, Aler
 import WaveHeader from '@/components/WaveHeader';
 import RoundedButton from '@/components/RoundedButton';
 import { useRouter } from 'expo-router';
+import EmptyMessage from '@/components/EmptyMessage';
 import { 
   useGetUserItineraries,
   useDeleteItinerary,
@@ -149,11 +150,9 @@ export default function ItinerariesScreen() {
           </View>
         ) : !sortedItineraries || sortedItineraries.length === 0 ? (
           <View style={styles.centerContainer}>
-            <ThemedIcons name="map" size={48} style={{ opacity: 0.3, marginBottom: 10 }} />
-            <ThemedText type='subtitle'>No itineraries yet</ThemedText>
-            <ThemedText style={{ marginTop: 5, opacity: 0.6, textAlign: 'center' }}>
-              Create your first itinerary to get started with planning your trips!
-            </ThemedText>
+            <EmptyMessage title='You have no itineraries' description='Please create an itinerary to get started'
+              iconName='note-plus'
+            />
           </View>
         ) : (
           <View style={styles.container}>

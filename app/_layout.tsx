@@ -131,6 +131,8 @@ function AppContent() {
           <Stack.Screen name="itineraries/itineraries-form" />
           <Stack.Screen name="itineraries/[id]" />
           <Stack.Screen name="safety/safety" />
+          <Stack.Screen name="rooms/rooms" />
+          <Stack.Screen name="rooms/rooms-create" />
           <Stack.Screen name="qr/qr-scan" />
           <Stack.Screen name="+not-found" />
         </Stack>

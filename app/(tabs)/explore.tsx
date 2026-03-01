@@ -2,7 +2,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { useThemeColor } from '@/hooks/useThemeColor';
 // import TaraBuddySection from '@/app/taraBuddy/taraBuddy';
-// import GroupsSection from '@/app/groups/groups';
+import RoomsSection from '@/app/rooms/rooms';
 import React, { useEffect, useRef, useState } from 'react';
 import { Animated, ScrollView, StyleSheet, TouchableOpacity, View, Alert } from 'react-native';
 // import { groupsApiService} from "@/services/groupsApiService";
@@ -87,7 +87,7 @@ export default function ExploreScreen() {
   const headerOpacity = headerVisible;
   const tabs = [
     'Rooms',
-    'Events',
+    'Tours',
     'TaraBuddy',
   ];
 
@@ -133,14 +133,14 @@ export default function ExploreScreen() {
       <View style={{flex: 1}}>
         <View style={[styles.sectionContainer, { display: activeTab === 0 ? 'flex' : 'none' }]}>
           <ScrollView 
-            ref={activeTab === 0 ? scrollViewRef : null}
+            ref={activeTab === 1 ? scrollViewRef : null}
             showsVerticalScrollIndicator={false}
             style={{width: '100%', height: '100%'}}
             contentContainerStyle={{ paddingTop: stickyHeight }}
             onScroll={handleScroll}
             scrollEventThrottle={16}
           >
-            {/* <ToursSection/> */}
+            <RoomsSection/>
           </ScrollView>
         </View>
         {/* Your Groups */}

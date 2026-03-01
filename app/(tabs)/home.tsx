@@ -199,8 +199,8 @@ export default function HomeScreen() {
 
           <TouchableOpacity style={[styles.menuOptions, !isConnected && {opacity:.5},{backgroundColor: secondaryColor}]} onPress={() => router.push('/qr/qr-scan')}
             disabled={!isConnected}>
-            <ThemedIcons name="qrcode-scan" size={25} color='#fff'/>
-            <ThemedText style={styles.menuOptionText}>Scan</ThemedText>
+            <ThemedIcons name="robot" size={25} color='#fff'/>
+            <ThemedText style={styles.menuOptionText}>Tara AI</ThemedText>
           </TouchableOpacity>
         </View>
 
