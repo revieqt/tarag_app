@@ -4,9 +4,8 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedIcons } from '@/components/ThemedIcons';
 import { useLocation } from '@/hooks/useLocation';
+import { useCurrentWeather } from '@/hooks/useWeather';
 import LoadingContainerAnimation from './LoadingContainerAnimation';
-import { BACKEND_URL } from '@/constants/Config';
-import { useQuery } from '@tanstack/react-query';
 
 interface WeatherCardProps {
   city?: string;
@@ -14,67 +13,6 @@ interface WeatherCardProps {
   longitude?: number;
   date?: string;
 }
-
-interface WeatherData {
-  temperature: number | null;
-  precipitation: number | null;
-  humidity: number | null;
-  windSpeed: number | null;
-  weatherType: string;
-  weatherCode: number;
-}
-
-// Calculate milliseconds until midnight
-const getTimeUntilMidnight = (): number => {
-  const now = new Date();
-  const tomorrow = new Date(now);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  tomorrow.setHours(0, 0, 0, 0);
-  return Math.max(tomorrow.getTime() - now.getTime(), 0);
-};
-
-// Fetch weather from backend
-const fetchWeather = async (
-  latitude: number,
-  longitude: number,
-  city: string
-): Promise<WeatherData> => {
-  const queryParams = new URLSearchParams({
-    city,
-    latitude: latitude.toString(),
-    longitude: longitude.toString(),
-  });
-
-  const response = await fetch(`${BACKEND_URL}/api/weather?${queryParams}`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error('Failed to fetch weather data');
-  }
-
-  const responseData = await response.json();
-  return responseData.data || responseData;
-};
-
-// Query hook for weather data
-const useWeather = (
-  latitude: number | undefined,
-  longitude: number | undefined,
-  city: string
-) => {
-  return useQuery<WeatherData>({
-    queryKey: ['weather', latitude, longitude],
-    queryFn: () => fetchWeather(latitude!, longitude!, city),
-    enabled: latitude !== undefined && longitude !== undefined,
-    staleTime: getTimeUntilMidnight(),
-    refetchInterval: getTimeUntilMidnight(),
-    gcTime: 24 * 60 * 60 * 1000, // Keep in cache for 24 hours
-  });
-};
 
 const getWeatherImage = (weatherCode: number): any => {
   if (weatherCode === 0) {
@@ -98,32 +36,15 @@ const getWeatherImage = (weatherCode: number): any => {
 export default function WeatherCard({ latitude, longitude, date, city }: WeatherCardProps) {
   const locationData = useLocation();
 
-  // Determine if we have location props
-  const hasLocationProps = latitude !== undefined && longitude !== undefined && city !== undefined;
-
-  // Query current location weather
-  const currentLocationQuery = useWeather(
+  // Get current location weather
+  const displayCity = locationData.city || locationData.suburb || locationData.region || locationData.state || 'Your Location';
+  const { data: displayWeather, isLoading, error } = useCurrentWeather(
     locationData.latitude,
     locationData.longitude,
-    locationData.city || locationData.suburb || locationData.region || locationData.state || 'Unknown'
+    displayCity
   );
 
-  // Query props-based weather
-  const propsQuery = useWeather(latitude, longitude, city || '');
-
-  // Determine which query to use
-  const activeQuery = hasLocationProps ? propsQuery : currentLocationQuery;
-  const { data: displayWeather, isLoading, error } = activeQuery;
-
-  // Determine display city
-  let displayCity = '';
-  if (hasLocationProps) {
-    displayCity = city || 'Unknown Location';
-  } else {
-    displayCity = locationData.city || locationData.suburb || locationData.region || locationData.state || 'Minglanilla';
-  }
-
-  const showLoading = isLoading || (locationData.loading && !hasLocationProps && !displayWeather);
+  const showLoading = isLoading || (locationData.loading && !displayWeather);
 
   if (showLoading) {
     return (
@@ -162,10 +83,10 @@ export default function WeatherCard({ latitude, longitude, date, city }: Weather
     <ThemedView color='primary' style={styles.locationContent}>
       <View>
         <ThemedText style={{ opacity: 0.5, fontSize: 12 }}>
-          {hasLocationProps ? 'Weather for' : "You're currently at"}
+          You're currently at
         </ThemedText>
         <ThemedText type='subtitle' style={{ fontSize: 16 }}>
-          {displayCity || 'Minglanilla'}
+          {displayCity}
         </ThemedText>
         
         <ThemedText style={{ opacity: 0.5, fontSize: 12 }}>

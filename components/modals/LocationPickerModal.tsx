@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Modal, View, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MapView, { PROVIDER_DEFAULT, Region } from 'react-native-maps';
@@ -12,12 +12,26 @@ import Button from '@/components/Button';
 import { useLocation } from '@/hooks/useLocation';
 import RoundedButton from '../RoundedButton';
 
+export interface Address {
+  country?: string;
+  region?: string;
+  province?: string;
+  city?: string;
+  district?: string;
+  neighborhood?: string;
+  postal_code?: string;
+}
+
+export interface LocationItemWithAddress extends LocationItem {
+  address: Address;
+}
+
 interface LocationPickerModalProps {
   visible: boolean;
   onClose: () => void;
-  onAddLocation: (location: LocationItem, note: string) => void;
+  onAddLocation: (location: LocationItemWithAddress, note: string) => void;
   isEditingLocation?: boolean;
-  initialLocation?: LocationItem;
+  initialLocation?: LocationItemWithAddress;
 }
 
 export default function LocationPickerModal({
@@ -32,8 +46,22 @@ export default function LocationPickerModal({
   const [mapRegion, setMapRegion] = useState<Region | null>(null);
   const [modalLocationName, setModalLocationName] = useState('');
   const [modalNote, setModalNote] = useState('');
-  const [modalLocationData, setModalLocationData] = useState<Partial<LocationItem>>({});
+  const [modalLocationData, setModalLocationData] = useState<Partial<LocationItemWithAddress>>({});
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
+  const debounceTimer = useRef<NodeJS.Timeout | null>(null);
+
+  // Parse address from Nominatim response
+  const parseAddressFromNominatim = (addressData: any): Address => {
+    return {
+      country: addressData.address?.country || undefined,
+      region: addressData.address?.state || undefined, // Nominatim uses 'state' for region
+      province: addressData.address?.county || undefined, // Nominatim sometimes uses 'county' for province
+      city: addressData.address?.city || addressData.address?.town || addressData.address?.village || undefined,
+      district: addressData.address?.district || addressData.address?.suburb || undefined,
+      neighborhood: addressData.address?.neighbourhood || addressData.address?.neighborhood || undefined,
+      postal_code: addressData.address?.postcode || undefined,
+    };
+  };
 
   // Initialize state when modal opens or when editing a location
   useEffect(() => {
@@ -74,9 +102,16 @@ export default function LocationPickerModal({
         }
       }
     }
+    
+    return () => {
+      // Cleanup: clear debounce timer when modal closes
+      if (debounceTimer.current) {
+        clearTimeout(debounceTimer.current);
+      }
+    };
   }, [visible, isEditingLocation, initialLocation, latitude, longitude]);
 
-  // Reverse geocode to get location name from coordinates
+  // Reverse geocode to get location name and address from coordinates
   const reverseGeocode = async (lat: number, lng: number) => {
     try {
       setIsLoadingLocation(true);
@@ -89,11 +124,19 @@ export default function LocationPickerModal({
         }
       );
       const data = await response.json();
-      const locationName = data.display_name || `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
-      return locationName;
+      const address = parseAddressFromNominatim(data);
+      
+      // Extract location name - use first part of display_name before first comma to avoid duplication with address
+      const displayName = data.display_name || `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+      const locationName = displayName.split(',')[0].trim();
+      
+      return { locationName, address };
     } catch (error) {
       console.error('Error reverse geocoding:', error);
-      return `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+      return { 
+        locationName: `${lat.toFixed(6)}, ${lng.toFixed(6)}`,
+        address: {}
+      };
     } finally {
       setIsLoadingLocation(false);
     }
@@ -101,13 +144,21 @@ export default function LocationPickerModal({
 
   // Handle map region change - update location data when user moves map
   const handleMapRegionChangeComplete = async (region: Region) => {
-    const locationName = await reverseGeocode(region.latitude, region.longitude);
-    setModalLocationName(locationName);
-    setModalLocationData({
-      locationName,
-      latitude: region.latitude,
-      longitude: region.longitude,
-    });
+    // Debounce: clear previous timer and set a new one
+    if (debounceTimer.current) {
+      clearTimeout(debounceTimer.current);
+    }
+    
+    debounceTimer.current = setTimeout(async () => {
+      const { locationName, address } = await reverseGeocode(region.latitude, region.longitude);
+      setModalLocationName(locationName);
+      setModalLocationData({
+        locationName,
+        latitude: region.latitude,
+        longitude: region.longitude,
+        address,
+      });
+    }, 500); // Wait 500ms after map stops moving before loading location
   };
 
   // Handle location selection from autocomplete - update map to show selected location
@@ -132,11 +183,12 @@ export default function LocationPickerModal({
   };
 
   const handleAddLocation = () => {
-    if (modalLocationData && modalLocationData.locationName && modalLocationData.latitude && modalLocationData.longitude) {
+    if (modalLocationData && modalLocationData.locationName && modalLocationData.latitude && modalLocationData.longitude && modalLocationData.address) {
       const locationToAdd = {
         ...modalLocationData,
         note: modalNote || '',
-      } as LocationItem;
+        address: modalLocationData.address || {},
+      } as LocationItemWithAddress;
       onAddLocation(locationToAdd, modalNote);
       onClose();
     }

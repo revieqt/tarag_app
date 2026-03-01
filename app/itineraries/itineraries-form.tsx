@@ -1,4 +1,3 @@
-import Button from '@/components/Button';
 import DatePicker from '@/components/DatePicker';
 import DropDownField from '@/components/DropDownField';
 import { LocationItem } from '@/components/LocationAutocomplete';
@@ -10,11 +9,10 @@ import { useCreateItinerary, useUpdateItinerary, useRepeatItinerary } from '@/ho
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState, useRef } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TouchableOpacity, View, PanResponder, Animated } from 'react-native';
-import { useLocation } from '@/hooks/useLocation';
 import Switch from '@/components/Switch';
 import BackButton from '@/components/BackButton';
 import ProcessModal from '@/components/modals/ProcessModal';
-import LocationPickerModal from '@/components/modals/LocationPickerModal';
+import LocationPickerModal, { LocationItemWithAddress } from '@/components/modals/LocationPickerModal';
 import RoundedButton from '@/components/RoundedButton';
 
 const ITINERARY_TYPES = [
@@ -26,7 +24,7 @@ const ITINERARY_TYPES = [
 
 interface DailyLocation {
   date: Date | null;
-  locations: LocationItem[];
+  locations: LocationItemWithAddress[];
 }
 
 function getDatesBetween(start: Date, end: Date): Date[] {
@@ -47,7 +45,6 @@ function getNumDays(start: Date, end: Date): number {
 export default function CreateItineraryScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
-  const { latitude, longitude, loading: locationLoading } = useLocation();
   const createItineraryMutation = useCreateItinerary();
   const updateItineraryMutation = useUpdateItinerary();
   const repeatItineraryMutation = useRepeatItinerary();
@@ -66,7 +63,7 @@ export default function CreateItineraryScreen() {
   const [planDaily, setPlanDaily] = useState(false);
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
-  const [locations, setLocations] = useState<LocationItem[]>([]);
+  const [locations, setLocations] = useState<LocationItemWithAddress[]>([]);
   const [dailyLocations, setDailyLocations] = useState<DailyLocation[]>([]);
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [currentDayIdx, setCurrentDayIdx] = useState<number | null>(null);
@@ -77,7 +74,7 @@ export default function CreateItineraryScreen() {
   const [draggedLocationKey, setDraggedLocationKey] = useState<string | null>(null);
   const [draggedItem, setDraggedItem] = useState<{ dayIdx: number | null; locIdx: number } | null>(null);
   const dragY = useRef(new Animated.Value(0)).current;
-  const locationHeights = useRef<{ [key: string]: number }>({}).current;
+  const lastSwapThreshold = useRef<number>(0);
 
   // Check if this is edit mode on mount
   useEffect(() => {
@@ -180,7 +177,7 @@ export default function CreateItineraryScreen() {
   }, [repeatItineraryMutation.isSuccess, router]);
 
   // Add a location to a day
-  const addLocationToDay = (dayIdx: number, loc: LocationItem) => {
+  const addLocationToDay = (dayIdx: number, loc: LocationItemWithAddress) => {
     const dayDate = autoDailyLocations[dayIdx]?.date;
     if (!dayDate) return;
     let updated = [...dailyLocations];
@@ -197,7 +194,7 @@ export default function CreateItineraryScreen() {
   };
 
   // Add a location for non-daily
-  const addLocation = (loc: LocationItem) => {
+  const addLocation = (loc: LocationItemWithAddress) => {
     setLocations([...locations, loc]);
   };
 
@@ -232,6 +229,7 @@ export default function CreateItineraryScreen() {
     setDraggedLocationKey(getLocationKey(dayIdx, locIdx));
     setDraggedItem({ dayIdx, locIdx });
     dragY.setValue(0);
+    lastSwapThreshold.current = 0;
   };
 
   // Handle drag end
@@ -239,6 +237,7 @@ export default function CreateItineraryScreen() {
     setDraggedLocationKey(null);
     setDraggedItem(null);
     dragY.setValue(0);
+    lastSwapThreshold.current = 0;
   };
 
   // Swap locations based on drag
@@ -263,26 +262,41 @@ export default function CreateItineraryScreen() {
       onStartShouldSetPanResponder: () => false,
       onMoveShouldSetPanResponder: () => draggedLocationKey === getLocationKey(dayIdx, locIdx),
       onPanResponderMove: (evt, gestureState) => {
-        if (draggedLocationKey === getLocationKey(dayIdx, locIdx)) {
+        if (draggedLocationKey && draggedItem) {
           dragY.setValue(gestureState.dy);
-          const threshold = 40; // Distance threshold to trigger swap
+          const threshold = 40;
           
-          // Determine which direction and if we should swap
-          if (Math.abs(gestureState.dy) > threshold) {
-            if (gestureState.dy > threshold && locIdx < totalLocations - 1) {
+          // Check if we've passed a new swap threshold (cumulative)
+          const currentThreshold = lastSwapThreshold.current + threshold;
+          const absoluteDy = Math.abs(gestureState.dy);
+          
+          if (absoluteDy > currentThreshold) {
+            const currentLocIdx = draggedItem.locIdx;
+            const currentDayIdx = draggedItem.dayIdx;
+            
+            if (gestureState.dy > 0) {
               // Dragging down
-              swapLocations(dayIdx, locIdx, locIdx + 1);
-              handleDragStart(dayIdx, locIdx + 1);
-            } else if (gestureState.dy < -threshold && locIdx > 0) {
+              if (currentLocIdx < totalLocations - 1) {
+                swapLocations(currentDayIdx, currentLocIdx, currentLocIdx + 1);
+                setDraggedItem({ dayIdx: currentDayIdx, locIdx: currentLocIdx + 1 });
+                setDraggedLocationKey(getLocationKey(currentDayIdx, currentLocIdx + 1));
+                lastSwapThreshold.current += threshold;
+              }
+            } else {
               // Dragging up
-              swapLocations(dayIdx, locIdx, locIdx - 1);
-              handleDragStart(dayIdx, locIdx - 1);
+              if (currentLocIdx > 0) {
+                swapLocations(currentDayIdx, currentLocIdx, currentLocIdx - 1);
+                setDraggedItem({ dayIdx: currentDayIdx, locIdx: currentLocIdx - 1 });
+                setDraggedLocationKey(getLocationKey(currentDayIdx, currentLocIdx - 1));
+                lastSwapThreshold.current -= threshold;
+              }
             }
           }
         }
       },
       onPanResponderRelease: () => {
         handleDragEnd();
+        lastSwapThreshold.current = 0;
       },
     });
   };
@@ -365,8 +379,8 @@ export default function CreateItineraryScreen() {
     setIsEditingLocation(false);
   };
 
-  const handleAddLocationFromModal = (location: LocationItem, note: string) => {
-    const locationToAdd = { ...location, note } as LocationItem;
+  const handleAddLocationFromModal = (location: LocationItemWithAddress, note: string) => {
+    const locationToAdd = { ...location, note } as LocationItemWithAddress;
 
     if (isEditingLocation && editingLocationIdx !== null) {
       // Edit existing location

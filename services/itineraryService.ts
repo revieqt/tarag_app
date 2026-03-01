@@ -1,10 +1,21 @@
 import { BACKEND_URL } from '@/constants/Config';
 import { getAccessToken } from '@/utils/getAccessToken';
 
+export interface Address {
+  country?: string;
+  region?: string;
+  province?: string;
+  city?: string;
+  district?: string;
+  neighborhood?: string;
+  postal_code?: string;
+}
+
 export interface Location {
   latitude: number;
   longitude: number;
   locationName: string;
+  address: Address;
   note: string;
 }
 

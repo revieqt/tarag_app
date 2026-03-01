@@ -12,6 +12,7 @@ import {
 } from '@/hooks/useItinerary';
 import { useMapType } from '@/hooks/useMapType';
 import { useLocation } from '@/hooks/useLocation';
+import { usePlaceWeather } from '@/hooks/useWeather';
 import { useSession } from '@/context/SessionContext';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState, useRef } from 'react';
@@ -25,18 +26,15 @@ import LocationDisplay from '@/components/LocationDisplay';
 import { ThemedView } from '@/components/ThemedView';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import BottomSheet from '@/components/BottomSheet';
+import { Location, Address } from '@/services/itineraryService';
 
-interface Location {
-  latitude: number;
-  longitude: number;
-  locationName: string;
-  note?: string;
+interface LocationWithDate extends Location {
   date?: number | Date | string;
 }
 
 interface DateLocations {
   date: number | Date | string;
-  locations: Location[];
+  locations: LocationWithDate[];
 }
 
 
@@ -53,7 +51,7 @@ export default function ItineraryViewScreen() {
   const { mapType: currentMapType } = useMapType();
   const { latitude: userLat, longitude: userLng } = useLocation();
   const { session, updateSession } = useSession();
-  const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
+  const [selectedLocation, setSelectedLocation] = useState<LocationWithDate | null>(null);
   const mapRef = useRef<MapView>(null);
   const secondaryColor = useThemeColor({}, 'secondary');
   const [groupName, setGroupName] = useState('');
@@ -72,6 +70,7 @@ export default function ItineraryViewScreen() {
               dayIndex,
               locIndex,
               label: `${dayIndex + 1}.${locIndex + 1}`,
+              date: day.date || undefined,
             });
           }
         });
@@ -81,6 +80,7 @@ export default function ItineraryViewScreen() {
           dayIndex: 0,
           locIndex: dayIndex,
           label: `${dayIndex + 1}`,
+          date: undefined,
         });
       }
     });
@@ -102,11 +102,11 @@ export default function ItineraryViewScreen() {
     }
   };
 
-  const handleMarkerPress = (location: Location) => {
+  const handleMarkerPress = (location: LocationWithDate) => {
     setSelectedLocation(location);
   };
 
-  const handleLocationClick = (location: Location) => {
+  const handleLocationClick = (location: LocationWithDate) => {
     if (mapRef.current) {
       mapRef.current.animateToRegion({
         latitude: location.latitude,
@@ -153,6 +153,11 @@ export default function ItineraryViewScreen() {
           >
             <View>
               <ThemedText>{l.locationName} </ThemedText>
+              {l.address && (l.address.city || l.address.district || l.address.region) && (
+                <ThemedText style={{opacity: .6, fontSize: 12}}>
+                  {[ l.address.district,l.address.city, l.address.region].filter(Boolean).join(', ')}
+                </ThemedText>
+              )}
               <ThemedText style={{opacity: .5}}>{l.note ? `${l.note}` : ''}</ThemedText>
             </View>
           </TouchableOpacity>
@@ -161,7 +166,7 @@ export default function ItineraryViewScreen() {
     );
   };
 
-  const allMapLocations: Location[] = Array.isArray(itinerary?.locations)
+  const allMapLocations: LocationWithDate[] = Array.isArray(itinerary?.locations)
     ? itinerary.locations
         .flatMap(item => {
           if (item && typeof item === 'object' && 'locations' in item && Array.isArray(item.locations)) {
@@ -176,7 +181,7 @@ export default function ItineraryViewScreen() {
           return [];
         })
         .filter(
-          (loc): loc is Location =>
+          (loc): loc is LocationWithDate =>
             !!loc &&
             typeof loc.latitude === 'number' &&
             typeof loc.longitude === 'number'
@@ -330,6 +335,50 @@ export default function ItineraryViewScreen() {
   const showFirstOptions =
     itinerary && (itinerary.status === 'active');
 
+  // Component to display weather for selected location
+  const SelectedLocationWeather = ({ selectedLocation, secondaryColor }: any) => {
+    const { data: weatherData, isLoading } = usePlaceWeather(
+      selectedLocation.latitude,
+      selectedLocation.longitude,
+      selectedLocation.address?.city
+    );
+
+    if (isLoading || !weatherData) return null;
+
+    return (
+      <View style={styles.weatherInfoContainer}>
+        <View style={styles.weatherInfo}>
+          <ThemedIcons name="thermometer" size={16} color="#B36B6B" />
+          <ThemedText style={{ color: '#fff', fontSize: 11, marginTop: 4 }}>
+            {weatherData.temperature !== null ? `${Math.round(weatherData.temperature)}°C` : 'N/A'}
+          </ThemedText>
+          <ThemedText style={{ color: '#fff', fontSize: 9 }}>Heat</ThemedText>
+        </View>
+        <View style={styles.weatherInfo}>
+          <ThemedIcons name="cloud" size={16} color="#5A7D9A" />
+          <ThemedText style={{ color: '#fff', fontSize: 11, marginTop: 4 }}>
+            {weatherData.precipitation !== null ? `${weatherData.precipitation}mm` : 'N/A'}
+          </ThemedText>
+          <ThemedText style={{ color: '#fff', fontSize: 9 }}>Rain</ThemedText>
+        </View>
+        <View style={styles.weatherInfo}>
+          <ThemedIcons name="water" size={16} color="#5A7D9A" />
+          <ThemedText style={{ color: '#fff', fontSize: 11, marginTop: 4 }}>
+            {weatherData.humidity !== null ? `${Math.round(weatherData.humidity)}%` : 'N/A'}
+          </ThemedText>
+          <ThemedText style={{ color: '#fff', fontSize: 9 }}>Humid</ThemedText>
+        </View>
+        <View style={styles.weatherInfo}>
+          <ThemedIcons name="fan" size={16} color="#5A7D9A" />
+          <ThemedText style={{ color: '#fff', fontSize: 11, marginTop: 4 }}>
+            {weatherData.windSpeed !== null ? `${Math.round(weatherData.windSpeed)}km/h` : 'N/A'}
+          </ThemedText>
+          <ThemedText style={{ color: '#fff', fontSize: 9 }}>Wind</ThemedText>
+        </View>
+      </View>
+    );
+  };
+
   return (
     <View style={{ flex: 1 }}>
       <View style={{flex: 1}}>
@@ -339,6 +388,7 @@ export default function ItineraryViewScreen() {
           style={styles.map} 
           initialRegion={mapInitialRegion}
           mapType={getMapTypeEnum(currentMapType)}
+          showsUserLocation={true}
         >
           {allMapLocations.map((loc, idx) => {
             return (
@@ -347,6 +397,7 @@ export default function ItineraryViewScreen() {
                 coordinate={{ latitude: loc.latitude, longitude: loc.longitude }}
                 onPress={() => handleMarkerPress(loc)}
                 type="dot"
+                color="limegreen"
               />
             );
           })}
@@ -468,6 +519,7 @@ export default function ItineraryViewScreen() {
           colors={['transparent','#000']}
           style={styles.bottomGradient}
         >
+      
             <TouchableOpacity onPress={() => setSelectedLocation(null)} style={styles.goBack}>
                 <ThemedIcons name="arrow-left" size={20} color="#fff" />
                 <ThemedText style={{color: '#fff', fontSize: 11}}>Back</ThemedText>
@@ -475,12 +527,17 @@ export default function ItineraryViewScreen() {
             <ThemedText type="subtitle" style={{ color: '#fff'}}>
                 {selectedLocation.locationName}
             </ThemedText>
+            {selectedLocation.address && (selectedLocation.address.city || selectedLocation.address.district || selectedLocation.address.region || selectedLocation.address.country) && (
+              <ThemedText style={{ color: '#fff', opacity: 0.7, marginBottom: 8, fontSize: 12 }}>
+                {[ selectedLocation.address.district,selectedLocation.address.city, selectedLocation.address.region, selectedLocation.address.country].filter(Boolean).join(', ')}
+              </ThemedText>
+            )}
 
             <View style={styles.locationButtonsContainer}>
                 <TouchableOpacity style={[styles.locationButtons, {backgroundColor: secondaryColor}]}
                 onPress={() => []
                 // handleGetDirection(selectedLocation)
-            }                >
+            }>
                     <ThemedIcons name="directions" size={20} color="#fff" />
                     <ThemedText style={{color: '#fff', fontSize: 11}}>Get Directions</ThemedText>
                 </TouchableOpacity>
@@ -490,9 +547,11 @@ export default function ItineraryViewScreen() {
                     <ThemedText style={{color: '#fff', fontSize: 11}}>Search</ThemedText>
                 </TouchableOpacity>
             </View>
+
+            <SelectedLocationWeather selectedLocation={selectedLocation} secondaryColor={secondaryColor} />
             
             {selectedLocation.note && (
-            <ThemedText style={{color: '#fff', marginBottom: 16}}>
+            <ThemedText style={styles.locationNote}>
                 {selectedLocation.note}
             </ThemedText>
             )}
@@ -540,6 +599,11 @@ export default function ItineraryViewScreen() {
                         >
                             <View>
                             <ThemedText>{loc.locationName} </ThemedText>
+                            {loc.address && (loc.address.city || loc.address.district || loc.address.region) && (
+                              <ThemedText style={{opacity: .6, fontSize: 12}}>
+                                {[ loc.address.district,loc.address.city, loc.address.region].filter(Boolean).join(', ')}
+                              </ThemedText>
+                            )}
                             <ThemedText style={{opacity: .5}}>{loc.note ? `${loc.note}` : ''}</ThemedText>
                             </View>
                         </TouchableOpacity>
@@ -624,11 +688,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 7,
-    marginTop: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#fff4',
+    marginVertical: 5,
     paddingBottom: 10,
-    marginBottom: 10,
   },
   locationButtons: {
     flexDirection: 'row',
@@ -650,5 +711,28 @@ const styles = StyleSheet.create({
     borderBottomColor: '#ccc4',
     paddingBottom: 10,
     marginBottom: 10,
-  }
+  },
+  weatherInfoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 5,
+  },
+  weatherInfo: {
+    flex: 1,
+    alignItems: 'center',
+    backgroundColor: '#0005',
+    paddingVertical: 10,
+    paddingHorizontal: 6,
+    borderRadius: 8,
+    gap: 2,
+  },
+  locationNote: {
+    zIndex: 100,
+    color: '#fff',
+    backgroundColor: '#0005',
+    padding: 10,
+    borderRadius: 10,
+    marginVertical: 10,
+  },
 });
