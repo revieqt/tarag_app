@@ -22,8 +22,6 @@ export default function CreateRoomScreen() {
         <ThemedText style={{ marginBottom: 20 }}>
           Enter the details for your new room.
         </ThemedText>
-
-        
       </KeyboardAvoidingView>
 
       {/* <Button
